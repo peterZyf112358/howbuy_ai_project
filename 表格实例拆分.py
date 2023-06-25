@@ -59,8 +59,14 @@ def value_ratio_to_value(value):
             result.append(value_to_value(item))
         return result
 
-def topk_to_value(value):
+def topk_to_value(value: str):
+    result = []
+    for item in value:
+        if item.isdigit():
+            result.append(item)
+    return ''.join(result)
 
 if __name__ == '__main__':
     print(ratio_to_value('九十八个点'))
     print(value_ratio_to_value('21-30万亿'))
+    print(topk_to_value('前100'))
