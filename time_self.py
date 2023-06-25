@@ -264,13 +264,23 @@ def analysis_date(list_date_: [datetime]):
 
 def datetime_transform(date_list: list):
     result = []
-    for item in date_list:
-        temp = item.split('-')
-        result.append(datetime.date(int(temp[0]), int(temp[1]), int(temp[2])))
+    if len(date_list) >= 3:
+        for item in date_list:
+            temp = item.split('-')
+            result.append(datetime.date(int(temp[0]), int(temp[1]), int(temp[2])))
+    if len(date_list) == 2:
+        for item in date_list:
+            temp = item.split('-')
+            result.append(datetime.date(int(temp[0]), int(temp[1]), 1))
+    else:
+        for item in date_list:
+            temp = item.split('-')
+            result.append(datetime.date(int(temp[0]), 1, 1))
     return result
 
 if __name__ == '__main__':
-    data = recognize_date('2023-02-12')
+    data = recognize_date('今年')
+    print(data)
     data_ = datetime_transform(data)
 
     print(analysis_date(data_))

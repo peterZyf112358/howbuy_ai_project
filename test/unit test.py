@@ -1,5 +1,6 @@
 import unittest
 from time_self import recognize_date as rd
+from 表格实例拆分 import ratio_to_value as ra
 import datetime
 
 class test_my_function(unittest.TestCase):
@@ -69,6 +70,17 @@ class test_my_function(unittest.TestCase):
         self.assertEqual(rd('1998三季度'), ['1998-07-01', '1998-09-30'])
     def test30(self):
         self.assertEqual(rd('2021年第4季度'), ['2021-10-01', '2021-12-31'])
+    def ratio1(self):
+        self.assertEqual(ra('百分之10'), 10.0)
+    def ratio2(self):
+        self.assertEqual(ra('百分之九十五'), 95.0)
+    def ratio3(self):
+        self.assertEqual(ra('九十个点'), 90.0)
 
+    def ration4(self):
+        self.assertEqual(ra('0.8'), 80.0)
+
+    def ration5(self):
+        self.assertEqual(ra('10%'), 10.0)
 if __name__ == "__main__":
     unittest.main()
