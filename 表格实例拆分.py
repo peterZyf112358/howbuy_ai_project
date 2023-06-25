@@ -28,6 +28,8 @@ def ratio_to_value(data_):
                         result.append(0)
     if re.match('0.\d+',data_):
         result.append((float(re.findall('0.\d+',data_)[0]) * 100))
+    else:
+        return None
     return float("".join([str(x) for x in result]))
 
 
@@ -43,6 +45,8 @@ def value_to_value(value):
                 result.append('00000')
             if item == '千':
                 result.append('000')
+    else:
+        return None
     return float("".join([str(x) for x in result]))
 
 
@@ -52,12 +56,12 @@ def value_ratio_to_value(value):
         units = re.findall('[亿万千]+', value)[0]
         for item in re.findall('\d+',value):
             result.append(value_to_value(item+units))
-        return result
-
     if re.match('\d+[%]{0,1}[亿万千]*', value):
         for item in re.findall('\d+[%]{0,1}[亿万千]*', value):
             result.append(value_to_value(item))
-        return result
+    else:
+        return None
+    return result
 
 def topk_to_value(value: str):
     result = []
@@ -66,7 +70,21 @@ def topk_to_value(value: str):
             result.append(item)
     return ''.join(result)
 
+def check_value(item_):
+    ratio = ratio_to_value(item_)
+    value = value_to_value(item_)
+    value_ratio = value_ratio_to_value(item_)
+    if not ratio:
+        return ratio
+    if not value:
+        return value
+    if not value_ratio:
+        return value_ratio
+    else:
+        raise 'the input cannot translate to any form'
+
+
 if __name__ == '__main__':
-    print(ratio_to_value('九十八个点'))
+    print(ratio_to_value('百分之50'))
     print(value_ratio_to_value('21-30万亿'))
     print(topk_to_value('前100'))

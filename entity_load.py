@@ -6,7 +6,7 @@ def transpose(X):
 
 
 def load_entity(path, sheet_name, usecols, dict_):
-    wb = pd.read_excel(path, sheet_name='ner_样例实体', usecols="A:B", header=1)
+    wb = pd.read_excel(path, sheet_name=sheet_name, usecols=usecols, header=1)
     header = []
     for value in wb.values:
         header.append(value)
@@ -18,19 +18,20 @@ def load_entity(path, sheet_name, usecols, dict_):
     return dict_
 
 def generate_dict():
-    enum = {}
-    others = {}
-    entity = {}
-    load_entity('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '属性枚举值', "A:C", enum)
-    load_entity('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '属性其他类型值', "A:B", others)
-    load_entity('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'ner_样例实体', 'A:B', entity)
-    load_entity('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'intention _样例实体', 'A:B', entity)
-    load_entity('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '属性对应实体类别', 'A:B', entity)
-    return enum, others, entity
+    enum_ = {}
+    others_ = {}
+    entity_ = {}
+    load_entity('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '属性枚举值', "A:C", enum_)
+    load_entity('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '属性其他类型值', "A:B", others_)
+    load_entity('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'ner_样例实体', 'A:B', entity_)
+    load_entity('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'intention _样例实体', 'A:B', entity_)
+    load_entity('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '属性对应实体类别', 'A:B', entity_)
+    return enum_, others_, entity_
 
 
 
 if __name__ == '__main__':
     enum, others, entity = generate_dict()
+    print(others['topk'])
 
 
