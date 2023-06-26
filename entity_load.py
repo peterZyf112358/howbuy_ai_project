@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 import pandas as pd
-
+import time_self
 def transpose(X):
     m,n = len(X), len(X[0])
     return [[X[i][j] for i in range(m)] for j in range(n)]
@@ -29,9 +30,10 @@ def generate_dict():
     return enum_, others_, entity_
 
 
-
 if __name__ == '__main__':
     enum, others, entity = generate_dict()
-    print(others['topk'])
+    for item in others['date']:
+        if not time_self.recognize_date(item):
+            print(item)
 
 
