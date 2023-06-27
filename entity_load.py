@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 import time_self
+import 表格实例拆分
+
+
 def transpose(X):
     m,n = len(X), len(X[0])
     return [[X[i][j] for i in range(m)] for j in range(n)]
@@ -32,8 +35,10 @@ def generate_dict():
 
 if __name__ == '__main__':
     enum, others, entity = generate_dict()
-    for item in others['date']:
-        if not time_self.recognize_date(item):
+    for item in others['ratio']:
+        if not 表格实例拆分.ratio_to_value(item):
             print(item)
+        else:
+            print(item, 表格实例拆分.ratio_to_value(item))
 
 
