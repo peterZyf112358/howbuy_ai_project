@@ -16,17 +16,24 @@ def test_all_a_ab_command(path, table, usecols, entity, others_):
     count = 0
     try:
         for value in wb.values:
-            if re.search('<topk>', value[1]):
+            if count <= 5700:
+                count += 1
+                # print(time)
+                continue
+            elif re.search('<topk>', value[1]):
                 temp = re.split('<\w*>', value[1])
                 sql = temp[0] + "'" + random.choice(entity[value[0]]) + "'" + temp[1] + random.choice(others_['topk'])
             else:
                 temp = value[1].split('<e>')
                 sql = temp[0] + "'" + random.choice(entity[value[0]]) + "'" + temp[1]
-                cursor.execute(sql)
-                count += 1
+            cursor.execute(sql)
+            count += 1
             if count % 100 == 0:
                 print(count)
     except Exception as e:
+        print(value)
+        print(temp)
+        print(sql)
         print(e)
     # finally:
     #     cursor.close()
@@ -102,8 +109,8 @@ if __name__ == '__main__':
                            database='kg')
     cursor = conn.cursor()
     enum, others, entity = entity_load.generate_dict()
-    # test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查单属性模板', 'C:D', entity, others)
-    # test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查多属性模板', 'F:G', entity, others)
+    test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查单属性模板', 'C:D', entity, others)
+    test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查多属性模板', 'F:G', entity, others)
     test_all_ba_bba_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '单属性查实体模板', "A,C,G", others, enum)
 
     cursor.close()

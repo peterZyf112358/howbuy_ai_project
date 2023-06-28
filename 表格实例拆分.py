@@ -48,9 +48,9 @@ def value_to_value(value):
     if re.findall("[一二三四五六七八九十]{1,}个?[亿万千百]*", value):
         temp = re.findall("[一二三四五六七八九十]{1,}个?[亿万千百]*", value)[0]
         if '个' in temp:
-            print(temp)
+            # print(temp)
             temp = "".join(re.split('个', temp))
-            print(temp)
+            # print(temp)
         result.append(cn2an.cn2an(temp))
     elif re.match('\d+[亿万千百]*个{0,1}\d*[亿万千百]*', value):
         for item in re.findall('\d+[亿万千百]*个{0,1}\d*[亿万千百]*',value)[0]:
