@@ -8,30 +8,26 @@ import pymysql
 import entity_load
 
 
-def db_structer_generater(list_of_file, write_file):
+def db_structer_generater(list_of_name, write_file):
     result = []
     temp = {}
 
-    for file in list_of_file:
+    for name in list_of_name:
+        column_names = []
         column_types = []
-        column_names = [[-1, "*"]]
-        f1 = open(file, mode='r', encoding="utf-8")
-        constant = f1.readlines()
-        for item in constant:
-            temp_list = item.split()
-            if "Table" in temp_list[0]:
-                temp['table_names'] = [temp_list[1]]
-                temp['table_names_original'] = [temp_list[1]]
-            elif len(temp_list) >= 2:
-                column_names.append([0, temp_list[0]])
-                column_types.append(temp_list[1])
+        cursor.execute('desc kg.' + name)
+        list_item = cursor.fetchall()
+        temp['table_names'] = name
+        temp['table_names_original'] = name
+        for item in list_item:
+            column_names.append([0, item[0]])
+            column_types.append(item[1])
         temp['column_names'] = column_names
         temp['column_types'] = column_types
         temp["foreign_keys"] = []
         temp["primary_keys"] = [1]
         result.append(temp)
         temp = {}
-        f1.close()
     f2 = open(write_file, mode='w', encoding="utf-8")
     f2.write(json.dumps(result, ensure_ascii=False))
     f2.close()
@@ -51,9 +47,7 @@ def date_structer_generater_a(list_of_info, write_file):
                 choice = random.choice(entity[value[1]])
                 sql = temp[0] + "'" + choice + "'" + temp[1]
                 question = value[0].split('<e>')
-                print(1, question)
                 question.insert(1, choice)
-                print(2, question)
                 question_ = "".join(question)
                 temp_dict["db_id"] = "kg"
                 temp_dict["query"] = sql
@@ -288,6 +282,35 @@ def date_structer_generater_ab(list_of_info, write_file):
     f2.write(json.dumps(result))
     f2.close()
 
+def date_structer_generater_ba(list_of_info, write_file):
+    result = []
+    temp_dict = {}
+    count = 0
+    for item in list_of_info:
+        path, table, usecols, entity, others_ = item[0], item[1], item[2], item[3], item[4]
+        wb = pd.read_excel(path, sheet_name=table, usecols=usecols, header=0)
+
+        try:
+            for value in wb.values:
+                temp = value[2].split('<e>')
+                choice = random.choice(entity[value[1]])
+                sql = temp[0] + "'" + choice + "'" + temp[1]
+                question = value[0].split('<e>')
+                question.insert(1, choice)
+                question_ = "".join(question)
+                temp_dict["db_id"] = "kg"
+                temp_dict["query"] = sql
+                temp_dict["question"] = question_
+                temp_dict['question_id'] = 'qid'+str(count)
+                result.append(temp_dict)
+                temp_dict = {}
+                count += 1
+        except Exception as e:
+            print(value)
+            print(e)
+    f2 = open(write_file, mode='w', encoding="utf-8")
+    f2.write(json.dumps(result))
+    f2.close()
 
 
 if __name__ == "__main__":
@@ -295,16 +318,18 @@ if __name__ == "__main__":
                            database='kg')
     cursor = conn.cursor()
 
-    enum, others, entity = entity_load.generate_dict()
+    db_structer_generater(['基金表', '基金经理表', '基金与基金经理关联表'], 'E:\project\数据格式\output2.json')
+
+    cursor.close()
+    conn.close()
 
 
+    # enum, others, entity = entity_load.generate_dict()
 
-    # print(db_structer_generater(['E:\project\数据格式\基金表',
-    #                              'E:\project\数据格式\基金经理表',
-    #                              'E:\project\数据格式\基金与基金经理关联表'], 'E:\project\数据格式\output.json'))
+
 
     # list1 = ['C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查单属性模板', 'B,C,D', entity, others]
     # date_structer_generater_a([list1], 'E:\project\数据格式\_a.json')
 
-    list2 = ['C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查多属性模板', "A:G",enum, entity, others]
-    date_structer_generater_ab([list2],'E:\project\数据格式\_ab.json')
+    # list2 = ['C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查多属性模板', "A:G",enum, entity, others]
+    # date_structer_generater_ab([list2],'E:\project\数据格式\_ab.json')
