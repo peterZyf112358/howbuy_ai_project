@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import cn2an
+import time_self
 
 chinese_number = ['零','一', '二', '三', '四', '五', '六', '七', '八', '九']
 unit = ['亿','千','万']
@@ -75,7 +76,7 @@ def value_ratio_to_value(value):
     if re.search('百分之[\u4e00-\u9fa5]+-?[\u4e00-\u9fa5]?', value):
         units = re.findall('[一二三四五六七八九十]十?[一二三四五六七八九]?', value)
         if len(units) == 1:
-            result.append(0)
+            result.append('0')
             result.append(str(cn2an.cn2an(units[0])))
         else:
             for item in units:
@@ -84,7 +85,7 @@ def value_ratio_to_value(value):
         units= re.findall('百分之\d{2}-?\d{2}\d?', value)[0]
         if '-' not in units:
             numbers = re.findall('\d+', units)[0]
-            result.append(0)
+            result.append('0')
             result.append(str(numbers))
         else:
             numbers = re.findall('\d+', units)
@@ -106,26 +107,28 @@ def topk_to_value(value: str):
     for item in value:
         if item.isdigit():
             result.append(item)
-    return ''.join(result)
+    return int(''.join(result))
 
-# def check_value(item_):
-#     ratio = ratio_to_value(item_)
-#     value = value_to_value(item_)
-#     value_ratio = value_ratio_to_value(item_)
-#     if ratio:
-#         return ratio
-#     if value_ratio:
-#         return value_ratio
-#     if value:
-#         return value
-#     else:
-#         raise 'the input cannot translate to any form'
+def check_type_and_return(type, value):
+    result = None
+    if type == 'topk':
+        result = topk_to_value(value)
+    elif type == 'ratio':
+        result = ratio_to_value(value)
+    elif type == 'value':
+        result = value_to_value(value)
+    elif type == 'date':
+        result = time_self.recognize_date(value)
+    elif type == 'area_ratio' or type == 'value_ratio' or type == 'area_value':
+        result = value_ratio_to_value(value)
+    return result
 
 
 if __name__ == '__main__':
-    print(ratio_to_value('百分之'))
+    print(ratio_to_value('百分之十'))
     # print(value_ratio_to_value('21-30万'))
     # print(topk_to_value('前6'))
     # output = cn2an.cn2an('五千万')
     # print(check_value('五千万'))
     print(value_to_value('一个亿'))
+    print(type(topk_to_value('第1')))

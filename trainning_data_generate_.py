@@ -6,6 +6,8 @@ import pandas as pd
 import pymysql
 
 import entity_load
+import 导出内容
+import 表格实例拆分
 
 
 def db_structer_generater(list_of_name, write_file):
@@ -96,7 +98,7 @@ def date_structer_generater_ab(list_of_info, write_file):
                             question.insert(3, attr1_5)
                         elif '2' in attributes[0] and '2' in attributes[1]:
                             question.insert(1, attr2)
-                            question.insert(3,attr2_5)
+                            question.insert(3, attr2_5)
                         elif '1' in attributes[0]:
                             question.insert(1, attr1)
                             question.insert(3, attr2)
@@ -117,7 +119,6 @@ def date_structer_generater_ab(list_of_info, write_file):
                     temp_dict['question_id'] = 'qid'+str(count)
                     result.append(temp_dict)
                     temp_dict = {}
-                    list.append(count)
                     count += 1
 
                 elif (value[2] == 'enum' and value[3] != 'no_type')\
@@ -272,7 +273,7 @@ def date_structer_generater_ab(list_of_info, write_file):
                     temp_dict = {}
                     count += 1
                 time += 1
-                print(count, time)
+                # print(count, time)
 
 
         except Exception as e:
@@ -287,30 +288,234 @@ def date_structer_generater_ba(list_of_info, write_file):
     temp_dict = {}
     count = 0
     for item in list_of_info:
-        path, table, usecols, entity, others_ = item[0], item[1], item[2], item[3], item[4]
+        path, table, usecols, others_, enum_ = item[0], item[1], item[2], item[3], item[4]
         wb = pd.read_excel(path, sheet_name=table, usecols=usecols, header=0)
 
         try:
             for value in wb.values:
-                temp = value[2].split('<e>')
-                choice = random.choice(entity[value[1]])
-                sql = temp[0] + "'" + choice + "'" + temp[1]
-                question = value[0].split('<e>')
-                question.insert(1, choice)
-                question_ = "".join(question)
+                attr_name = value[0]
+                value_type = value[2]
+                question = value[1]
+                org_sql = value[3]
+                if value_type == 'enum':
+                    random_value = random.choice(enum_[attr_name])
+                    input_data = str(random_value)
+                else:
+                    if value_type == 'area_value':
+                        random_value = random.choice(others_['value_ratio'])
+                    else:
+                        random_value = random.choice(others_[value_type])
+
+                    input_data = 表格实例拆分.check_type_and_return(value_type, random_value)
+                if '<a>' in question:
+                    temp_question = re.split('<a>', question)
+                    temp_question.insert(1, attr_name)
+                    question = "".join(temp_question)
+                if re.search('<\w*>', question):
+                    temp_question = re.split('<\w*>', question)
+                    temp_question.insert(1, str(random_value))
+                    question = "".join(temp_question)
+                if input_data:
+                    if type(input_data) == list:
+                        if len(input_data) == 2:
+                            temp_sql = re.split('<\w*>', org_sql)
+                            temp_sql.insert(1, input_data[0])
+                            temp_sql.insert(3, input_data[1])
+                            result_sql = "".join(temp_sql)
+                        else:
+                            temp_sql = re.split('<\w*>', org_sql)
+                            temp_sql.insert(1, input_data[0])
+                            result_sql = "".join(temp_sql)
+                    else:
+                        temp_sql = re.split('<\w*>', org_sql)
+                        temp_sql.insert(1, str(input_data))
+                        result_sql = "".join(temp_sql)
+                # print(question)
                 temp_dict["db_id"] = "kg"
-                temp_dict["query"] = sql
-                temp_dict["question"] = question_
-                temp_dict['question_id'] = 'qid'+str(count)
+                temp_dict["query"] = result_sql
+                temp_dict["question"] = question
+                temp_dict['question_id'] = 'qid' + str(count)
+                # print(result_sql)
                 result.append(temp_dict)
                 temp_dict = {}
                 count += 1
+
         except Exception as e:
             print(value)
+            print('random_value', random_value)
+            print('input_data', input_data)
             print(e)
     f2 = open(write_file, mode='w', encoding="utf-8")
     f2.write(json.dumps(result))
     f2.close()
+
+def date_structer_generater_bba(list_of_info, write_file):
+    result = []
+    temp_dict = {}
+    count = 0
+    try:
+        for item in list_of_info:
+            path, table, usecols, others_, enum_, rp = item[0], item[1], item[2], item[3], item[4], item[5]
+            wb = pd.read_excel(path, sheet_name=table, usecols=usecols, header=0)
+            # attr1	attr2 module	attr1_relation	attr2_relation sql
+            for value in wb.values:
+                print(count)
+                attr1 = value[0]
+                attr2 = value[1]
+                question = value[2]
+                ar1 = rp[value[3]]
+                ar2 = rp[value[4]]
+                a_ = value[5]
+                sql = value[6]
+                random_value1 = None
+                random_value2 = None
+                ratio = 0
+
+                if ar1 == 'enum':
+                    if attr1 == '是否在销':
+                        input_data1 = ''
+                    else:
+                        random_value1 = random.choice(enum_[attr1])
+                        input_data1 = str(random_value1)
+                elif ar1 == 'max' or ar1 == 'min':
+                    input_data1 = ''
+                else:
+                    if ar1 == 'area_value':
+                        random_value1 = random.choice(others_['value_ratio'])
+                    else:
+                        random_value1 = random.choice(others_[ar1])
+                    input_data1 = 表格实例拆分.check_type_and_return(ar1, random_value1)
+                if type(input_data1) == list and len(input_data1) == 2:
+                    ratio = 1
+
+                if ar2 == 'enum':
+                    if attr2 == '是否在销':
+                        input_data2 = ''
+                    else:
+                        random_value2 = random.choice(enum_[attr2])
+                        input_data2 = str(random_value2)
+                elif ar2 == 'max' or ar2 == 'min':
+                    input_data2 = ''
+                else:
+                    if ar2 == 'area_value':
+                        random_value2 = random.choice(others_['value_ratio'])
+                    else:
+                        random_value2 = random.choice(others_[ar2])
+                    input_data2 = 表格实例拆分.check_type_and_return(ar2, random_value2)
+                if type(input_data2) == list and len(input_data2) == 2:
+                    ratio = 2
+                # print(input_data1, input_data2)
+
+                if re.findall('<\w*1\w*>',question):
+                    question = re.split('<\w*1\w*>', question)
+                    question.insert(1, random_value1)
+                    question = "".join(question)
+
+                if re.findall('<\w*2\w*>',question):
+                    question = re.split('<\w*2\w*>', question)
+                    question.insert(1, random_value2)
+                    question = "".join(question)
+
+                if '<a>' in question:
+                    question = re.split('<a>', question)
+                    if a_ == 'fund':
+                        a_ = '基金公司'
+                    elif a_ == 'agent':
+                        a_ = '机构名称'
+                    elif a_ == 'manager':
+                        a_ = '基金经理'
+                    question.insert(1, a_)
+                    question = "".join(question)
+
+
+                if re.findall('<attr[12]_area_[vr]a[lt][ui][eo]\d{1}>', sql):
+                    org_sql = re.split('<attr[12]_area_[vr]a[lt][ui][eo]\d{1}>', sql)
+                    if ratio == 1:
+                        org_sql.insert(1, input_data1[0])
+                        org_sql.insert(3, input_data1[1])
+                        org_sql = "".join(org_sql)
+                        if re.findall('<\w*>', org_sql):
+                            if type(input_data2) == list:
+                                org_sql = re.split('<\w*>', org_sql)
+                                org_sql.insert(1, input_data2[0])
+                                org_sql = "".join(org_sql)
+                            if type(input_data2) == float or type(input_data2) == int:
+                                org_sql = re.split('<\w*>', org_sql)
+                                org_sql.insert(1, str(input_data2))
+                                org_sql = "".join(org_sql)
+                            else:
+                                org_sql = re.split('<\w*>', org_sql)
+                                org_sql.insert(1, "'" + str(input_data2) + "'")
+                                org_sql = "".join(org_sql)
+                    elif ratio == 2:
+                        org_sql.insert(1, input_data2[0])
+                        org_sql.insert(3, input_data2[1])
+                        org_sql = "".join(org_sql)
+                        if re.findall('<\w*>', org_sql):
+                            if type(input_data1) == list:
+                                org_sql = re.split('<\w*>', org_sql)
+                                org_sql.insert(1, input_data1[0])
+                                org_sql = "".join(org_sql)
+                            elif type(input_data1) == float or type(input_data1) == int:
+                                org_sql = re.split('<\w*>', org_sql)
+                                org_sql.insert(1, str(input_data1))
+                                org_sql = "".join(org_sql)
+                            else:
+                                org_sql = re.split('<\w*>', org_sql)
+                                org_sql.insert(1, "'" + str(input_data1) + "'")
+                                org_sql = "".join(org_sql)
+                else:
+                    org_sql = sql
+                    # print(org_sql)
+                    if re.findall('<\w*1+\w*>', org_sql):
+                        if type(input_data1) == list:
+                            # print('1_1')
+                            org_sql = re.split('<\w*1+\w*>', org_sql)
+                            org_sql.insert(1, input_data1[0])
+                            org_sql = "".join(org_sql)
+                        elif type(input_data1) == float or type(input_data1) == int:
+                            # print('2_1')
+                            org_sql = re.split('<\w*1+\w*>', org_sql)
+                            org_sql.insert(1, str(input_data1))
+                            org_sql = "".join(org_sql)
+                        else:
+                            # print('3_1')
+                            org_sql = re.split('<\w*1+\w*>', org_sql)
+                            org_sql.insert(1, "'" + str(input_data1) + "'")
+                            org_sql = "".join(org_sql)
+                    if re.findall('<\w*2+\w*>', org_sql):
+
+                        if type(input_data2) == list:
+                            # print('1_2')
+                            org_sql = re.split('<\w*2+\w*>', org_sql)
+                            org_sql.insert(1, input_data2[0])
+                            org_sql = "".join(org_sql)
+                        elif type(input_data2) == float or type(input_data2) == int:
+                            # print('2_2')
+                            org_sql = re.split('<\w*2+\w*>', org_sql)
+                            org_sql.insert(1, str(input_data2))
+                            org_sql = "".join(org_sql)
+                        else:
+                            # print('3_2')
+                            org_sql = re.split('<\w*2+\w*>', org_sql)
+                            org_sql.insert(1, "'" + str(input_data2) + "'")
+                            org_sql = "".join(org_sql)
+                    # print(question)
+                    temp_dict["db_id"] = "kg"
+                    temp_dict["query"] = org_sql
+                    temp_dict["question"] = question
+                    temp_dict['question_id'] = 'qid' + str(count)
+                    # print(result_sql)
+                    result.append(temp_dict)
+                    temp_dict = {}
+                    count += 1
+
+    except Exception as e:
+        print(e)
+    f2 = open(write_file, mode='w', encoding="utf-8")
+    f2.write(json.dumps(result))
+    f2.close()
+
 
 
 if __name__ == "__main__":
@@ -318,18 +523,22 @@ if __name__ == "__main__":
                            database='kg')
     cursor = conn.cursor()
 
-    db_structer_generater(['基金表', '基金经理表', '基金与基金经理关联表'], 'E:\project\数据格式\output2.json')
+    # db_structer_generater(['基金表', '基金经理表', '基金与基金经理关联表'], 'E:\project\数据格式\output2.json')
 
     cursor.close()
     conn.close()
+    enum, others, entity = entity_load.generate_dict()
 
-
-    # enum, others, entity = entity_load.generate_dict()
-
-
+    rp = 导出内容.generate_relationship('C:/Users/yifan.zhao01/desktop/转换.txt')
 
     # list1 = ['C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查单属性模板', 'B,C,D', entity, others]
     # date_structer_generater_a([list1], 'E:\project\数据格式\_a.json')
 
     # list2 = ['C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查多属性模板', "A:G",enum, entity, others]
     # date_structer_generater_ab([list2],'E:\project\数据格式\_ab.json')
+
+    list3 = ['C:/Users/yifan.zhao01/Desktop/模板.xlsx', '单属性查实体模板', "A:C, G", others, enum]
+    date_structer_generater_ba([list3], 'E:\project\数据格式\_ba.json')
+
+    list4 = ['C:/Users/yifan.zhao01/Desktop/模板.xlsx', '多属性查实体模板', "A:G", others, enum, rp]
+    date_structer_generater_ba([list4], 'E:\project\数据格式\_bba.json')

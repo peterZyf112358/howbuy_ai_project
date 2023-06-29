@@ -49,6 +49,7 @@ def check_include(path, sheet_name):
             #     print(str(i+3) + ' ' + list_[1][i] + ' ' + list_[6][i])
 
 
+
 if __name__ == '__main__':
 
     file1 = 'C:/Users/yifan.zhao01/Desktop/模板.xlsx'
