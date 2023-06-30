@@ -1,3 +1,5 @@
+import pandas as pd
+
 
 def generate_twin(file1, file2):
     f1 = open(file1, mode='w', encoding="utf-8")
@@ -32,18 +34,7 @@ def generate_single(file1, file2):
     f1.close()
     f2.close()
 
-def generate_relationship(path):
-    f1 = open(path, mode='r', encoding="utf-8")
-    content = f1.readlines()
-    result = {}
-    for items in content:
-        item = items.split()
-        result[item[1]] = item[0]
-    return result
-
-
 if __name__ == '__main__':
-    # file1 = 'C:/Users/yifan.zhao01/desktop/new.txt'
-    # file2 = 'C:/Users/yifan.zhao01/desktop/测试.txt'
+    file1 = 'C:/Users/yifan.zhao01/desktop/new.txt'
+    file2 = 'C:/Users/yifan.zhao01/desktop/测试.txt'
     # generate_single(file2, file1)
-    generate_relationship('C:/Users/yifan.zhao01/desktop/转换.txt')

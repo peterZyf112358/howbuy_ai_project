@@ -6,6 +6,7 @@ import random
 import re
 import 表格实例拆分
 import time_self
+import json
 import 导出内容
 
 
@@ -13,7 +14,6 @@ attr_ = [['<attr1_value>'], ['<attr1_topk>'], ['<attr1_ratio>'], ['<attr1_pos>']
 
 def test_all_a_ab_command(path, table, usecols, entity, others_):
     wb = pd.read_excel(path, sheet_name=table, usecols=usecols, header=1)
-    time = 0
     count = 0
     try:
         for value in wb.values:
@@ -245,16 +245,40 @@ def test_al_bba_command(path, table, usecols_, others_, enum_, relationship_path
     #     cursor.close()
     #     conn.close()
 
+def test_all_json(json_file):
+    f1 = open(json_file, mode='r')
+    item = f1.readline()
+    type_ = json.loads(item)
+    count = 0
+    try:
+
+        for items in type_:
+            if count < 8550:
+                count += 1
+                continue
+            print(count)
+            cursor.execute(items['query'])
+            print(items['question'])
+            print(items['query'])
+            print(cursor.fetchone())
+            count += 1
+    # print(json.loads(f1.readlines()))
+    except Exception as e:
+        print(items['query'])
+        print(e)
+    f1.close()
+
 if __name__ == '__main__':
     conn = pymysql.connect(host='192.168.209.110', port=3307, user='messi', password='messi', charset='utf8',
                            database='kg')
     cursor = conn.cursor()
-    enum, others, entity = entity_load.generate_dict()
-    rp = 导出内容.generate_relationship('C:/Users/yifan.zhao01/desktop/转换.txt')
-    test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查单属性模板', 'C:D', entity, others)
-    test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查多属性模板', 'F:G', entity, others)
-    test_all_ba_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '单属性查实体模板', "A,C,G", others, enum)
-    test_al_bba_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '多属性查实体模板', "A:E, G", others, enum, rp)
+    enum, others, entity = entity_load.generate_dict('C:/Users/yifan.zhao01/desktop/模板.xlsx')
+    rp = entity_load.generate_relationship('C:/Users/yifan.zhao01/desktop/模板.xlsx', "属性数值转换", "A:B")
+    # test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查单属性模板', 'C:D', entity, others)
+    # test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查多属性模板', 'F:G', entity, others)
+    # test_all_ba_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '单属性查实体模板', "A,C,G", others, enum)
+    # test_al_bba_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '多属性查实体模板', "A:E, G", others, enum, rp)
 
+    test_all_json('C:/Users/yifan.zhao01/Desktop/train.json')
     cursor.close()
     conn.close()
