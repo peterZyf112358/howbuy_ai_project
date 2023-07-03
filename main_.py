@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 import json
 import random
 import re
@@ -9,11 +10,11 @@ import entity_load
 import 表格实例拆分
 
 
-def db_structer_generater(list_of_name, write_file):
+def db_struct_generate(list_of_name, write_file):
     result = []
     temp = {}
-
     for name in list_of_name:
+        cell = []
         column_names = []
         column_types = []
         cursor.execute('desc kg.' + name)
@@ -27,13 +28,47 @@ def db_structer_generater(list_of_name, write_file):
         temp['column_types'] = column_types
         temp["foreign_keys"] = []
         temp["primary_keys"] = [1]
+        temp['cell'] = cell
         result.append(temp)
         temp = {}
+
     f2 = open(write_file, mode='w', encoding="utf-8")
     f2.write(json.dumps(result, ensure_ascii=False))
     f2.close()
     print('生成完成')
+
     return json.dumps(result, ensure_ascii=False)
+
+def data_content_generate(list_of_name, write_file):
+    result = []
+    result_dict = {'db_id': "kg"}
+    tables = {}
+    for name in list_of_name:
+        temp = {}
+        cell = []
+        column_names = []
+        column_types = []
+        cursor.execute('desc kg.' + name)
+        list_item = cursor.fetchall()
+        for item in list_item:
+            column_names.append(item[0])
+            column_types.append(item[1])
+        temp['header'] = column_names
+        temp["table_name"] = name
+        temp['type'] = column_types
+        cursor.execute('select * from kg.' + name)
+        list_item = cursor.fetchall()
+        for item in list_item:
+            cell.append(list(item))
+        temp['cell'] = cell
+        tables[name] = temp
+    result_dict['tables'] = tables
+    result.append(result_dict)
+    f2 = open(write_file, mode='w', encoding="utf-8")
+    f2.write(json.dumps(result, ensure_ascii=False))
+    f2.close()
+    return json.dumps(result, ensure_ascii=False)
+
 
 def date_structer_generater_a(list_of_info, result):
     # result = []
@@ -547,9 +582,9 @@ if __name__ == "__main__":
                            database='kg')
     cursor = conn.cursor()
 
-    db_structer_generater(['基金表', '基金经理表', '基金与基金经理关联表'], 'C:/Users/yifan.zhao01/Desktop/db_schema.json')
-
-    generate_data_db('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'C:/Users/yifan.zhao01/Desktop/train.json')
+    print(data_content_generate(['基金表', '基金经理表', '基金与基金经理关联表'], 'C:/Users/yifan.zhao01/Desktop/db_content.json'))
+    # db_struct_generate(['基金表', '基金经理表', '基金与基金经理关联表'], 'C:/Users/yifan.zhao01/Desktop/db_schema.json')
+    # generate_data_db('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'C:/Users/yifan.zhao01/Desktop/train.json')
 
     cursor.close()
     conn.close()
