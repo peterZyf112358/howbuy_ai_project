@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import datetime
 import json
 import random
 import re
@@ -14,7 +13,6 @@ def db_struct_generate(list_of_name, write_file):
     result = []
     temp = {}
     for name in list_of_name:
-        cell = []
         column_names = []
         column_types = []
         cursor.execute('desc kg.' + name)
@@ -23,12 +21,14 @@ def db_struct_generate(list_of_name, write_file):
         temp['table_names_original'] = name
         for item in list_item:
             column_names.append([0, item[0]])
-            column_types.append(item[1])
+            if 'double' in [item[1]]:
+                column_types.append('number')
+            else:
+                column_types.append('text')
         temp['column_names'] = column_names
         temp['column_types'] = column_types
         temp["foreign_keys"] = []
         temp["primary_keys"] = [1]
-        temp['cell'] = cell
         result.append(temp)
         temp = {}
 
@@ -38,6 +38,7 @@ def db_struct_generate(list_of_name, write_file):
     print('生成完成')
 
     return json.dumps(result, ensure_ascii=False)
+
 
 def data_content_generate(list_of_name, write_file):
     result = []
@@ -52,11 +53,14 @@ def data_content_generate(list_of_name, write_file):
         list_item = cursor.fetchall()
         for item in list_item:
             column_names.append(item[0])
-            column_types.append(item[1])
+            if 'double' in [item[1]]:
+                column_types.append('number')
+            else:
+                column_types.append('text')
         temp['header'] = column_names
         temp["table_name"] = name
         temp['type'] = column_types
-        cursor.execute('select * from kg.' + name)
+        cursor.execute('select * from kg.' + name + ' limit 1000')
         list_item = cursor.fetchall()
         for item in list_item:
             cell.append(list(item))
@@ -65,9 +69,10 @@ def data_content_generate(list_of_name, write_file):
     result_dict['tables'] = tables
     result.append(result_dict)
     f2 = open(write_file, mode='w', encoding="utf-8")
-    f2.write(json.dumps(result, ensure_ascii=False))
+    # f2.write(json.dumps(result, ensure_ascii=False))
+    json.dump(result, f2, ensure_ascii=False)
     f2.close()
-    return json.dumps(result, ensure_ascii=False)
+    return
 
 
 def date_structer_generater_a(list_of_info, result):
@@ -89,7 +94,7 @@ def date_structer_generater_a(list_of_info, result):
                 temp_dict["db_id"] = "kg"
                 temp_dict["query"] = sql
                 temp_dict["question"] = question_
-                temp_dict['question_id'] = 'qid'+str(count)
+                temp_dict['question_id'] = 'qid' + str(count)
                 result.append(temp_dict)
                 temp_dict = {}
                 count += 1
@@ -99,6 +104,7 @@ def date_structer_generater_a(list_of_info, result):
     # f2 = open(write_file, mode='w', encoding="utf-8")
     # f2.write(json.dumps(result))
     # f2.close()
+
 
 def date_structer_generater_ab(list_of_info, result):
     # result = []
@@ -122,7 +128,7 @@ def date_structer_generater_ab(list_of_info, result):
                     temp = value[6].split('<e>')
                     sql = temp[0] + "'" + entity_ + "'" + temp[1]
                     question = value[4].split('<e>')
-                    question.insert(1,entity_)
+                    question.insert(1, entity_)
                     question = "".join(question)
                     attributes = re.findall('<\w*>', question)
                     if len(attributes) == 2:
@@ -150,12 +156,12 @@ def date_structer_generater_ab(list_of_info, result):
                     temp_dict["db_id"] = "kg"
                     temp_dict["query"] = sql
                     temp_dict["question"] = question_
-                    temp_dict['question_id'] = 'qid'+str(count)
+                    temp_dict['question_id'] = 'qid' + str(count)
                     result.append(temp_dict)
                     temp_dict = {}
                     count += 1
 
-                elif (value[2] == 'enum' and value[3] != 'no_type')\
+                elif (value[2] == 'enum' and value[3] != 'no_type') \
                         or (value[2] != 'no_type' and value[3] == 'enum'):
                     if value[2] == 'enum':
                         ### attr1	attr2	attr1_type	attr2_type	module	entity_type sql
@@ -317,6 +323,7 @@ def date_structer_generater_ab(list_of_info, result):
     # f2.write(json.dumps(result))
     # f2.close()
 
+
 def date_structer_generater_ba(list_of_info, result):
     # result = []
     temp_dict = {}
@@ -362,7 +369,7 @@ def date_structer_generater_ba(list_of_info, result):
                             org_sql = "".join(temp_sql)
                     else:
                         temp_sql = re.split('<\w*>', org_sql)
-                        temp_sql.insert(1, "'" + str(input_data)+ "'")
+                        temp_sql.insert(1, "'" + str(input_data) + "'")
                         org_sql = "".join(temp_sql)
                 # print(question)
                 temp_dict["db_id"] = "kg"
@@ -382,6 +389,7 @@ def date_structer_generater_ba(list_of_info, result):
     # f2 = open(write_file, mode='w', encoding="utf-8")
     # f2.write(json.dumps(result))
     # f2.close()
+
 
 def date_structer_generater_bba(list_of_info, result):
     # result = []
@@ -440,12 +448,12 @@ def date_structer_generater_bba(list_of_info, result):
                     ratio = 2
                 # print(input_data1, input_data2)
 
-                if re.findall('<\w*1\w*>',question):
+                if re.findall('<\w*1\w*>', question):
                     question = re.split('<\w*1\w*>', question)
                     question.insert(1, str(random_value1))
                     question = "".join(question)
 
-                if re.findall('<\w*2\w*>',question):
+                if re.findall('<\w*2\w*>', question):
                     question = re.split('<\w*2\w*>', question)
                     question.insert(1, str(random_value2))
                     question = "".join(question)
@@ -460,7 +468,6 @@ def date_structer_generater_bba(list_of_info, result):
                         a_ = '基金经理'
                     question.insert(1, a_)
                     question = "".join(question)
-
 
                 if re.findall('<attr[12]_area_[vr]a[lt][ui][eo]\d{1}>', sql):
                     org_sql = re.split('<attr[12]_area_[vr]a[lt][ui][eo]\d{1}>', sql)
@@ -546,12 +553,13 @@ def date_structer_generater_bba(list_of_info, result):
 
     except Exception as e:
         print(e)
-        print('problem', value, input_data1,input_data2)
+        print('problem', value, input_data1, input_data2)
         # print(rp)
         raise
     # f2 = open(write_file, mode='w', encoding="utf-8")
     # f2.write(json.dumps(result))
     # f2.close()
+
 
 def generate_data_db(excel_xlsx, output_path):
     result = []
@@ -570,11 +578,10 @@ def generate_data_db(excel_xlsx, output_path):
         print(e)
         raise
     finally:
-        f1 = open(output_path,mode='w', encoding="utf-8")
+        f1 = open(output_path, mode='w', encoding="utf-8")
         f1.write(json.dumps(result))
         f1.close()
         print('导出成功')
-
 
 
 if __name__ == "__main__":
@@ -582,7 +589,8 @@ if __name__ == "__main__":
                            database='kg')
     cursor = conn.cursor()
 
-    print(data_content_generate(['基金表', '基金经理表', '基金与基金经理关联表'], 'C:/Users/yifan.zhao01/Desktop/db_content.json'))
+    data_content_generate(['基金表', '基金经理表', '基金与基金经理关联表'],
+                            'C:/Users/yifan.zhao01/Desktop/db_content.json')
     # db_struct_generate(['基金表', '基金经理表', '基金与基金经理关联表'], 'C:/Users/yifan.zhao01/Desktop/db_schema.json')
     # generate_data_db('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'C:/Users/yifan.zhao01/Desktop/train.json')
 

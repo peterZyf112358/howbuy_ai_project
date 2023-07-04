@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import cn2an
-import time_self
+from 转译文件 import time_self
 
 chinese_number = ['零','一', '二', '三', '四', '五', '六', '七', '八', '九']
 unit = ['亿','千','万']

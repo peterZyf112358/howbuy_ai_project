@@ -5,10 +5,8 @@ import entity_load
 import random
 import re
 import 表格实例拆分
-import time_self
+from 转译文件 import time_self
 import json
-import 导出内容
-
 
 attr_ = [['<attr1_value>'], ['<attr1_topk>'], ['<attr1_ratio>'], ['<attr1_pos>'], ['<attr1_neg>'], ['<attr1_min>'], ['<attr1_max>'], ['<attr1_enum>'], ['<value>'], ['<attr1_date>'], ['<attr1_area_value>'], ['<attr1_area_ratio>']]
 
@@ -24,7 +22,8 @@ def test_all_a_ab_command(path, table, usecols, entity, others_):
             if re.search('<topk>', value[1]):
                 temp = re.split('<\w*>', value[1])
 
-                sql = temp[0] + "'" + random.choice(entity[value[0]]) + "'" + temp[1] + str(表格实例拆分.topk_to_value(random.choice(others_['topk'])))
+                sql = temp[0] + "'" + random.choice(entity[value[0]]) + "'" + temp[1] + str(
+                    表格实例拆分.topk_to_value(random.choice(others_['topk'])))
             else:
                 temp = value[1].split('<e>')
                 sql = temp[0] + "'" + random.choice(entity[value[0]]) + "'" + temp[1]

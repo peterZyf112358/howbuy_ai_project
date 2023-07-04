@@ -1,6 +1,6 @@
 import unittest
-from time_self import recognize_date as rd
-from 表格实例拆分 import ratio_to_value as ra
+from 转译文件.time_self import recognize_date as rd
+from main.表格实例拆分 import ratio_to_value as ra
 import datetime
 
 class test_my_function(unittest.TestCase):

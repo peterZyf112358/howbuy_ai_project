@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
-import time_self
-import 表格实例拆分
+from 转译文件 import time_self
 
 
 def transpose(X):
