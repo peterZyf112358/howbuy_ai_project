@@ -52,6 +52,7 @@ def bimap(first, second):
 
 
 def filter_nones(d):
+    #dict 去空
     return {k: v for k, v in d.items() if v is not None and v != []}
 
 
@@ -64,6 +65,9 @@ def join(iterable, delimiter):
 
 
 def intersperse(delimiter, seq):
+    # my_list = ["apple", "banana", "orange"]
+    # result = list(intersperse(", ", my_list))
+    # ['apple', ', ', 'banana', ', ', 'orange']
     return itertools.islice(
         itertools.chain.from_iterable(
             zip(itertools.repeat(delimiter), seq)), 1, None)
