@@ -17,8 +17,11 @@ def db_struct_generate(list_of_name, write_file):
         column_types = []
         cursor.execute('desc kg.' + name)
         list_item = cursor.fetchall()
-        temp['table_names'] = name
-        temp['table_names_original'] = name
+        temp['db_id'] = 'kg'
+        temp['table_names'] = [name]
+        temp['table_names_original'] = [name]
+        column_names.append([-1, "*"])
+        column_types.append([-1, "*"])
         for item in list_item:
             column_names.append([0, item[0]])
             if 'double' in [item[1]]:
@@ -26,6 +29,7 @@ def db_struct_generate(list_of_name, write_file):
             else:
                 column_types.append('text')
         temp['column_names'] = column_names
+        temp['column_names_original'] = column_names
         temp['column_types'] = column_types
         temp["foreign_keys"] = []
         temp["primary_keys"] = [1]
@@ -95,6 +99,7 @@ def date_structer_generater_a(list_of_info, result):
                 temp_dict["query"] = sql
                 temp_dict["question"] = question_
                 temp_dict['question_id'] = 'qid' + str(count)
+                temp_dict['sql'] = {}
                 result.append(temp_dict)
                 temp_dict = {}
                 count += 1
@@ -157,6 +162,7 @@ def date_structer_generater_ab(list_of_info, result):
                     temp_dict["query"] = sql
                     temp_dict["question"] = question_
                     temp_dict['question_id'] = 'qid' + str(count)
+                    temp_dict['sql'] = {}
                     result.append(temp_dict)
                     temp_dict = {}
                     count += 1
@@ -208,6 +214,7 @@ def date_structer_generater_ab(list_of_info, result):
                     temp_dict["query"] = sql
                     temp_dict["question"] = question_
                     temp_dict['question_id'] = 'qid' + str(count)
+                    temp_dict['sql'] = {}
                     result.append(temp_dict)
                     temp_dict = {}
                     count += 1
@@ -247,6 +254,7 @@ def date_structer_generater_ab(list_of_info, result):
                             temp_dict["query"] = sql
                             temp_dict["question"] = question_
                             temp_dict['question_id'] = 'qid' + str(count)
+                            temp_dict['sql'] = {}
                             result.append(temp_dict)
                             temp_dict = {}
                         else:
@@ -268,6 +276,7 @@ def date_structer_generater_ab(list_of_info, result):
                             temp_dict["query"] = sql
                             temp_dict["question"] = question_
                             temp_dict['question_id'] = 'qid' + str(count)
+                            temp_dict['sql'] = {}
                             result.append(temp_dict)
                             temp_dict = {}
                     count += 1
@@ -309,6 +318,7 @@ def date_structer_generater_ab(list_of_info, result):
                     temp_dict["query"] = sql
                     temp_dict["question"] = question_
                     temp_dict['question_id'] = 'qid' + str(count)
+                    temp_dict['sql'] = {}
                     result.append(temp_dict)
                     temp_dict = {}
                     count += 1
@@ -376,6 +386,7 @@ def date_structer_generater_ba(list_of_info, result):
                 temp_dict["query"] = org_sql
                 temp_dict["question"] = question
                 temp_dict['question_id'] = 'qid' + str(count)
+                temp_dict['sql'] = {}
                 # print(temp_sql)
                 result.append(temp_dict)
                 temp_dict = {}
@@ -546,6 +557,7 @@ def date_structer_generater_bba(list_of_info, result):
                     temp_dict["query"] = org_sql
                     temp_dict["question"] = question
                     temp_dict['question_id'] = 'qid' + str(count)
+                    temp_dict['sql'] = {}
                     # print(temp_sql)
                     result.append(temp_dict)
                     temp_dict = {}
@@ -580,6 +592,7 @@ def generate_data_db(excel_xlsx, output_path):
     finally:
         f1 = open(output_path, mode='w', encoding="utf-8")
         f1.write(json.dumps(result))
+        # print(result)
         f1.close()
         print('导出成功')
 
@@ -590,9 +603,9 @@ if __name__ == "__main__":
     cursor = conn.cursor()
 
     data_content_generate(['基金表', '基金经理表', '基金与基金经理关联表'],
-                            'C:/Users/yifan.zhao01/Desktop/db_content.json')
-    # db_struct_generate(['基金表', '基金经理表', '基金与基金经理关联表'], 'C:/Users/yifan.zhao01/Desktop/db_schema.json')
-    # generate_data_db('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'C:/Users/yifan.zhao01/Desktop/train.json')
+                            'E:\project\data\DuSQL\db_content.json')
+    db_struct_generate(['基金表', '基金经理表', '基金与基金经理关联表'], 'E:\project\data\DuSQL\db_schema.json')
+    generate_data_db('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'E:/project/data/DuSQL/train.json')
 
     cursor.close()
     conn.close()

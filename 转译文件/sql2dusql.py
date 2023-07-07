@@ -34,25 +34,14 @@ import networkx as nx
 import asdl
 import attr
 
-from text2sql import ast_util
+from 转译文件.utils import ast_util
 
 
 def bimap(first, second):
-    # first = ['apple', 'banana', 'cherry']
-    # second = [1, 2, 3]
-    #
-    # result1, result2 = bimap(first, second)
-    #
-    # print(result1)
-    # # Output: {'apple': 1, 'banana': 2, 'cherry': 3}
-    #
-    # print(result2)
-    # # Output: {1: 'apple', 2: 'banana', 3: 'cherry'}
     return {f: s for f, s in zip(first, second)}, {s: f for f, s in zip(first, second)}
 
 
 def filter_nones(d):
-    #dict 去空
     return {k: v for k, v in d.items() if v is not None and v != []}
 
 
@@ -65,18 +54,14 @@ def join(iterable, delimiter):
 
 
 def intersperse(delimiter, seq):
-    # my_list = ["apple", "banana", "orange"]
-    # result = list(intersperse(", ", my_list))
-    # ['apple', ', ', 'banana', ', ', 'orange']
     return itertools.islice(
         itertools.chain.from_iterable(
             zip(itertools.repeat(delimiter), seq)), 1, None)
 
-#主程序
+
 class DuSQLLanguageV2(object):
     root_type = 'sql'
 
-    # initiate
     def __init__(
             self,
             asdl_file,
@@ -305,6 +290,7 @@ class DuSQLLanguageV2(object):
             })
 
     def parse_select(self, select):
+        print(select)
         if type(select[0]) is bool:
             aggs = select[1]
         else:
@@ -315,6 +301,7 @@ class DuSQLLanguageV2(object):
         }
 
     def parse_agg(self, agg):
+        print(agg)
         if len(agg) == 2:
             agg_id, val_unit = agg
         else:
@@ -749,5 +736,9 @@ class DuSQLUnparser:
 
 
 if __name__ == "__main__":
-    """run some simple test cases"""
-    dusql_lang = DuSQLLanguageV2("conf/DuSQL.asdl")
+    import json
+    # Create an instance of the DuSQLLanguageV2 parser
+    parser = DuSQLLanguageV2("E:/project/转译文件/utils/DuSQL.asdl")
+    print(parser.parse_select([[0, [0, [0, 2, 3], False]]]))
+    # print(vars(parser))
+    # print(parser)
