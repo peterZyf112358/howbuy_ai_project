@@ -2,40 +2,65 @@
 import json
 import random
 import re
+import sys
+import traceback
+
 import pandas as pd
 import pymysql
 
 import entity_load
 import 表格实例拆分
+import 转译文件.mysql2dusql as m_d
 
 
 def db_struct_generate(list_of_name, write_file):
     result = []
     temp = {}
+    temp['db_id'] = 'kg'
+    column_names = []
+    column_types = []
+    column_names.append([-1, "*"])
+    column_types.append('text')
+    index = -1
+    count = 1
+    table_names = []
+    table_names_original = []
+    primary_key = []
+    item_name = []
+    foreign_keys = []
+
     for name in list_of_name:
-        column_names = []
-        column_types = []
+        index += 1
         cursor.execute('desc kg.' + name)
         list_item = cursor.fetchall()
-        temp['db_id'] = 'kg'
-        temp['table_names'] = [name]
-        temp['table_names_original'] = [name]
-        column_names.append([-1, "*"])
-        column_types.append([-1, "*"])
+        table_names.append(name)
+        table_names_original.append(name)
+        primary_key.append(count)
+
+
         for item in list_item:
-            column_names.append([0, item[0]])
+            count += 1
+            if item[0] in item_name:
+                if item[0] in ['机构代码', '基金代码','经理代码']:
+                    parent = item_name.index(item[0]) + 1
+                    print(item_name[parent-1], item[0])
+                    foreign_keys.append([parent, count])
+            column_names.append([index, item[0]])
+            item_name.append(item[0])
             if 'double' in [item[1]]:
                 column_types.append('number')
             else:
                 column_types.append('text')
-        temp['column_names'] = column_names
-        temp['column_names_original'] = column_names
-        temp['column_types'] = column_types
-        temp["foreign_keys"] = []
-        temp["primary_keys"] = [1]
-        result.append(temp)
-        temp = {}
+        # temp["foreign_keys"] = []
+    temp['table_names'] = table_names
+    temp['table_names_original'] = table_names
+    temp['column_types'] = column_types
+    temp['column_names'] = column_names
+    temp['primary_key'] = primary_key
+    temp['column_names_original'] = column_names
+    temp['foreign_keys'] = foreign_keys
 
+    result.append(temp)
     f2 = open(write_file, mode='w', encoding="utf-8")
     f2.write(json.dumps(result, ensure_ascii=False))
     f2.close()
@@ -79,7 +104,7 @@ def data_content_generate(list_of_name, write_file):
     return
 
 
-def date_structer_generater_a(list_of_info, result):
+def date_structer_generater_a(list_of_info, result, schema_):
     # result = []
     count = 0
     temp_dict = {}
@@ -91,27 +116,33 @@ def date_structer_generater_a(list_of_info, result):
             for value in wb.values:
                 temp = value[2].split('<e>')
                 choice = random.choice(entity[value[1]])
-                sql = temp[0] + "'" + choice + "'" + temp[1]
+                sql_ = temp[0] + "'" + choice + "'" + temp[1]
                 question = value[0].split('<e>')
                 question.insert(1, choice)
                 question_ = "".join(question)
                 temp_dict["db_id"] = "kg"
-                temp_dict["query"] = sql
+                temp_dict["query"] = sql_
                 temp_dict["question"] = question_
                 temp_dict['question_id'] = 'qid' + str(count)
-                temp_dict['sql'] = {}
+                query = "".join(sql_.split('kg.'))
+                # print(query)
+                q_json = m_d.get_sql(schema_, query, 'kg')
+                temp_dict['sql'] = q_json
                 result.append(temp_dict)
                 temp_dict = {}
                 count += 1
         except Exception as e:
-            print(value)
+            print(traceback.format_exc())
+            print(query)
+            print(count)
             print(e)
+            sys.exit(1)
     # f2 = open(write_file, mode='w', encoding="utf-8")
     # f2.write(json.dumps(result))
     # f2.close()
 
 
-def date_structer_generater_ab(list_of_info, result):
+def date_structer_generater_ab(list_of_info, result, schema_):
     # result = []
     temp_dict = {}
     time = 0
@@ -122,7 +153,7 @@ def date_structer_generater_ab(list_of_info, result):
 
         try:
             for value in wb.values:
-                ### attr1	attr2	attr1_type	attr2_type	module	entity_type sql
+                ### attr1	attr2	attr1_type	attr2_type	module	entity_type sql_
 
                 if value[2] == 'enum' and value[3] == 'enum':
                     attr1 = random.choice(enum[value[0]])
@@ -131,7 +162,7 @@ def date_structer_generater_ab(list_of_info, result):
                     attr2_5 = random.choice(enum[value[1]])
                     entity_ = random.choice(entity[value[5]])
                     temp = value[6].split('<e>')
-                    sql = temp[0] + "'" + entity_ + "'" + temp[1]
+                    sql_ = temp[0] + "'" + entity_ + "'" + temp[1]
                     question = value[4].split('<e>')
                     question.insert(1, entity_)
                     question = "".join(question)
@@ -159,10 +190,11 @@ def date_structer_generater_ab(list_of_info, result):
                     question_ = "".join(question)
                     # print(question_)
                     temp_dict["db_id"] = "kg"
-                    temp_dict["query"] = sql
+                    temp_dict["query"] = sql_
                     temp_dict["question"] = question_
                     temp_dict['question_id'] = 'qid' + str(count)
-                    temp_dict['sql'] = {}
+                    query = "".join(sql_.split('kg.'))
+                    temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
                     result.append(temp_dict)
                     temp_dict = {}
                     count += 1
@@ -170,7 +202,7 @@ def date_structer_generater_ab(list_of_info, result):
                 elif (value[2] == 'enum' and value[3] != 'no_type') \
                         or (value[2] != 'no_type' and value[3] == 'enum'):
                     if value[2] == 'enum':
-                        ### attr1	attr2	attr1_type	attr2_type	module	entity_type sql
+                        ### attr1	attr2	attr1_type	attr2_type	module	entity_type sql_
                         attr1 = random.choice(enum[value[0]])
                         attr2 = random.choice(others_[value[3]])
                         attr1_5 = random.choice(enum[value[0]])
@@ -183,7 +215,7 @@ def date_structer_generater_ab(list_of_info, result):
 
                     entity_ = random.choice(entity[value[5]])
                     temp = value[6].split('<e>')
-                    sql = temp[0] + "'" + entity_ + "'" + temp[1]
+                    sql_ = temp[0] + "'" + entity_ + "'" + temp[1]
                     question = value[4].split('<e>')
                     question.insert(1, entity_)
                     question = "".join(question)
@@ -211,25 +243,26 @@ def date_structer_generater_ab(list_of_info, result):
                             question.insert(1, str(attr2))
                     question_ = "".join(question)
                     temp_dict["db_id"] = "kg"
-                    temp_dict["query"] = sql
+                    temp_dict["query"] = sql_
                     temp_dict["question"] = question_
                     temp_dict['question_id'] = 'qid' + str(count)
-                    temp_dict['sql'] = {}
+                    query = "".join(sql_.split('kg.'))
+                    temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
                     result.append(temp_dict)
                     temp_dict = {}
                     count += 1
 
                 elif value[2] == 'no_type' or value[3] == 'no_type':
                     if value[2] == 'no_type' and value[3] == 'no_type':
-                        ### attr1	attr2	attr1_type	attr2_type	module	entity_type sql
+                        ### attr1	attr2	attr1_type	attr2_type	module	entity_type sql_
                         entity_ = random.choice(entity[value[5]])
                         temp = value[6].split('<e>')
-                        sql = temp[0] + "'" + entity_ + "'" + temp[1]
+                        sql_ = temp[0] + "'" + entity_ + "'" + temp[1]
                         question = value[4].split('<e>')
                         question.insert(1, entity_)
                         question_ = "".join(question)
                         temp_dict["db_id"] = "kg"
-                        temp_dict["query"] = sql
+                        temp_dict["query"] = sql_
                         temp_dict["question"] = question_
                         temp_dict['question_id'] = 'qid' + str(count)
                         result.append(temp_dict)
@@ -237,13 +270,13 @@ def date_structer_generater_ab(list_of_info, result):
                     else:
                         if value[2] == 'no_type':
                             if value[3] == 'enum':
-                                ### attr1	attr2	attr1_type	attr2_type	module	entity_type sql
+                                ### attr1	attr2	attr1_type	attr2_type	module	entity_type sql_
                                 attr2 = random.choice(enum[value[1]])
                             else:
                                 attr2 = random.choice(others_[value[3]])
                             entity_ = random.choice(entity[value[5]])
                             temp = value[6].split('<e>')
-                            sql = temp[0] + "'" + entity_ + "'" + temp[1]
+                            sql_ = temp[0] + "'" + entity_ + "'" + temp[1]
                             question = value[4].split('<e>')
                             question.insert(1, entity_)
                             question = "".join(question)
@@ -251,21 +284,22 @@ def date_structer_generater_ab(list_of_info, result):
                             question.insert(1, str(attr2))
                             question_ = "".join(question)
                             temp_dict["db_id"] = "kg"
-                            temp_dict["query"] = sql
+                            temp_dict["query"] = sql_
                             temp_dict["question"] = question_
                             temp_dict['question_id'] = 'qid' + str(count)
-                            temp_dict['sql'] = {}
+                            query = "".join(sql_.split('kg.'))
+                            temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
                             result.append(temp_dict)
                             temp_dict = {}
                         else:
                             if value[2] == 'enum':
-                                ### attr1	attr2	attr1_type	attr2_type	module	entity_type sql
+                                ### attr1	attr2	attr1_type	attr2_type	module	entity_type sql_
                                 attr2 = random.choice(enum[value[0]])
                             else:
                                 attr2 = random.choice(others_[value[2]])
                             entity_ = random.choice(entity[value[5]])
                             temp = value[6].split('<e>')
-                            sql = temp[0] + "'" + entity_ + "'" + temp[1]
+                            sql_ = temp[0] + "'" + entity_ + "'" + temp[1]
                             question = value[4].split('<e>')
                             question.insert(1, entity_)
                             question = "".join(question)
@@ -273,10 +307,11 @@ def date_structer_generater_ab(list_of_info, result):
                             question.insert(1, str(attr2))
                             question_ = "".join(question)
                             temp_dict["db_id"] = "kg"
-                            temp_dict["query"] = sql
+                            temp_dict["query"] = sql_
                             temp_dict["question"] = question_
                             temp_dict['question_id'] = 'qid' + str(count)
-                            temp_dict['sql'] = {}
+                            query = "".join(sql_.split('kg.'))
+                            temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
                             result.append(temp_dict)
                             temp_dict = {}
                     count += 1
@@ -287,7 +322,7 @@ def date_structer_generater_ab(list_of_info, result):
                     attr2_5 = random.choice(others_[value[3]])
                     entity_ = random.choice(entity[value[5]])
                     temp = value[6].split('<e>')
-                    sql = temp[0] + "'" + entity_ + "'" + temp[1]
+                    sql_ = temp[0] + "'" + entity_ + "'" + temp[1]
                     question = value[4].split('<e>')
                     question.insert(1, entity_)
                     question = "".join(question)
@@ -315,10 +350,11 @@ def date_structer_generater_ab(list_of_info, result):
                             question.insert(1, str(attr2))
                     question_ = "".join(question)
                     temp_dict["db_id"] = "kg"
-                    temp_dict["query"] = sql
+                    temp_dict["query"] = sql_
                     temp_dict["question"] = question_
                     temp_dict['question_id'] = 'qid' + str(count)
-                    temp_dict['sql'] = {}
+                    query = "".join(sql_.split('kg.'))
+                    temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
                     result.append(temp_dict)
                     temp_dict = {}
                     count += 1
@@ -329,12 +365,13 @@ def date_structer_generater_ab(list_of_info, result):
         except Exception as e:
             print(value)
             print(e)
+            break
     # f2 = open(write_file, mode='w', encoding="utf-8")
     # f2.write(json.dumps(result))
     # f2.close()
 
 
-def date_structer_generater_ba(list_of_info, result):
+def date_structer_generater_ba(list_of_info, result, schema_):
     # result = []
     temp_dict = {}
     count = 0
@@ -386,7 +423,8 @@ def date_structer_generater_ba(list_of_info, result):
                 temp_dict["query"] = org_sql
                 temp_dict["question"] = question
                 temp_dict['question_id'] = 'qid' + str(count)
-                temp_dict['sql'] = {}
+                query = "".join(org_sql.split('kg.'))
+                temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
                 # print(temp_sql)
                 result.append(temp_dict)
                 temp_dict = {}
@@ -397,12 +435,13 @@ def date_structer_generater_ba(list_of_info, result):
             print('random_value', random_value)
             print('input_data', input_data)
             print(e)
+            break
     # f2 = open(write_file, mode='w', encoding="utf-8")
     # f2.write(json.dumps(result))
     # f2.close()
 
 
-def date_structer_generater_bba(list_of_info, result):
+def date_structer_generater_bba(list_of_info, result, schema_):
     # result = []
     temp_dict = {}
     count = 0
@@ -410,7 +449,7 @@ def date_structer_generater_bba(list_of_info, result):
         for item in list_of_info:
             path, table, usecols, others_, enum_, rp = item[0], item[1], item[2], item[3], item[4], item[5]
             wb = pd.read_excel(path, sheet_name=table, usecols=usecols, header=0)
-            # attr1	attr2 module	attr1_relation	attr2_relation sql
+            # attr1	attr2 module	attr1_relation	attr2_relation sql_
             for value in wb.values:
                 # print(count)
                 attr1 = value[0]
@@ -419,7 +458,7 @@ def date_structer_generater_bba(list_of_info, result):
                 ar1 = rp[value[3]]
                 ar2 = rp[value[4]]
                 a_ = value[5]
-                sql = value[6]
+                sql_ = value[6]
                 random_value1 = None
                 random_value2 = None
                 ratio = 0
@@ -480,8 +519,8 @@ def date_structer_generater_bba(list_of_info, result):
                     question.insert(1, a_)
                     question = "".join(question)
 
-                if re.findall('<attr[12]_area_[vr]a[lt][ui][eo]\d{1}>', sql):
-                    org_sql = re.split('<attr[12]_area_[vr]a[lt][ui][eo]\d{1}>', sql)
+                if re.findall('<attr[12]_area_[vr]a[lt][ui][eo]\d{1}>', sql_):
+                    org_sql = re.split('<attr[12]_area_[vr]a[lt][ui][eo]\d{1}>', sql_)
                     if ratio == 1:
                         org_sql.insert(1, str(input_data1[0]))
                         org_sql.insert(3, str(input_data1[1]))
@@ -517,7 +556,7 @@ def date_structer_generater_bba(list_of_info, result):
                                 org_sql.insert(1, "'" + str(input_data1) + "'")
                                 org_sql = "".join(org_sql)
                 else:
-                    org_sql = sql
+                    org_sql = sql_
                     # print(org_sql)
                     if re.findall('<\w*1+\w*>', org_sql):
                         if type(input_data1) == list:
@@ -557,7 +596,8 @@ def date_structer_generater_bba(list_of_info, result):
                     temp_dict["query"] = org_sql
                     temp_dict["question"] = question
                     temp_dict['question_id'] = 'qid' + str(count)
-                    temp_dict['sql'] = {}
+                    query = "".join(sql_.split('kg.'))
+                    temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
                     # print(temp_sql)
                     result.append(temp_dict)
                     temp_dict = {}
@@ -573,19 +613,19 @@ def date_structer_generater_bba(list_of_info, result):
     # f2.close()
 
 
-def generate_data_db(excel_xlsx, output_path):
+def generate_data_db(excel_xlsx, output_path, db_schema):
     result = []
     try:
         enum, others, entity = entity_load.generate_dict(excel_xlsx)
         rp = entity_load.generate_relationship(excel_xlsx, "属性数值转换", "A:B")
         list1 = [excel_xlsx, '实体查单属性模板', 'B,C,D', entity, others]
-        date_structer_generater_a([list1], result)
-        list2 = [excel_xlsx, '实体查多属性模板', "A:G", enum, entity, others]
-        date_structer_generater_ab([list2], result)
-        list3 = [excel_xlsx, '单属性查实体模板', "A:C, G", others, enum]
-        date_structer_generater_ba([list3], result)
-        list4 = [excel_xlsx, '多属性查实体模板', "A:G", others, enum, rp]
-        date_structer_generater_bba([list4], result)
+        date_structer_generater_a([list1], result, db_schema)
+        # list2 = [excel_xlsx, '实体查多属性模板', "A:G", enum, entity, others]
+        # date_structer_generater_ab([list2], result, db_schema)
+        # list3 = [excel_xlsx, '单属性查实体模板', "A:C, G", others, enum]
+        # date_structer_generater_ba([list3], result, db_schema)
+        # list4 = [excel_xlsx, '多属性查实体模板', "A:G", others, enum, rp]
+        # date_structer_generater_bba([list4], result, db_schema)
     except Exception as e:
         print(e)
         raise
@@ -602,10 +642,10 @@ if __name__ == "__main__":
                            database='kg')
     cursor = conn.cursor()
 
-    data_content_generate(['基金表', '基金经理表', '基金与基金经理关联表'],
-                            'E:\project\data\DuSQL\db_content.json')
-    db_struct_generate(['基金表', '基金经理表', '基金与基金经理关联表'], 'E:\project\data\DuSQL\db_schema.json')
-    generate_data_db('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'E:/project/data/DuSQL/train.json')
-
-    cursor.close()
-    conn.close()
+    data_content_generate(['机构表', '基金表', '基金经理表', '基金与基金经理关联表'],'E:\project\data\DuSQL\db_content.json')
+    db_struct_generate(['机构表', '基金表', '基金经理表', '基金与基金经理关联表'], 'E:\project\data\DuSQL\db_schema.json')
+    schema = m_d.get_schema_from_json2("E:\project\data\DuSQL\db_schema.json")[0]['kg']
+    generate_data_db('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'E:/project/data/DuSQL/train.json', schema)
+    #
+    # cursor.close()
+    # conn.close()

@@ -26,8 +26,9 @@
 
 import json
 import sqlite3
-from nltk import word_tokenize
+import nltk
 
+from nltk import word_tokenize
 
 CLAUSE_KEYWORDS = ('select', 'from', 'where', 'group',
                    'order', 'limit', 'intersect', 'union', 'except')
@@ -93,7 +94,9 @@ class Schema:
 
 
 def get_schema(db):
+
     """
+    从db获得schema
     Get database's schema, which is a dict with table name as key
     and list of column  names as value
     :param db: database path
@@ -101,22 +104,26 @@ def get_schema(db):
     """
 
     schema = {}
-    conn = sqlite3.connect(db)
+    conn = pymysql.connect(host='192.168.209.110', port=3307, user='messi', password='messi', charset='utf8',
+                           database='kg')
+    # conn = sqlite3.connect(db)
     cursor = conn.cursor()
 
     # fetch table names
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    tables = [str(table[0].lower()) for table in cursor.fetchall()]
-
+    cursor.execute("show fields from kg.基金表")
+    tables = cursor.fetchall()
+    # #print(tables)
+    column_name = [str(table[0].lower()) for table in tables]
     # fetch table info
-    for table in tables:
-        cursor.execute("PRAGMA table_info({})".format(table))
-        schema[table] = [str(col[1].lower()) for col in cursor.fetchall()]
+
+    for index in range(len(tables)):
+        schema[column_name[index]] = str(tables[index][1].lower())
 
     return schema
 
 
 def get_schema_from_json(fpath):
+    "从json获得schema"
     with open(fpath) as f:
         data = json.load(f)
 
@@ -131,6 +138,7 @@ def get_schema_from_json(fpath):
 
 
 def tokenize(string):
+    ""
     string = str(string)
     # ensures all string values wrapped by "" problem??
     string = string.replace("\'", "\"")
@@ -171,11 +179,13 @@ def scan_alias(toks):
     alias = {}
     for idx in as_idxs:
         alias[toks[idx + 1]] = toks[idx - 1]
+    # #print('scan_alias', alias)
     return alias
 
 
 def get_tables_with_alias(schema, toks):
     tables = scan_alias(toks)
+    # print('get_tables_with_alias',tables)
     for key in schema:
         assert key not in tables, "Alias {} has the same name in table".format(
             key)
@@ -594,8 +604,11 @@ def load_data(fpath):
 
 
 def get_sql(schema, query, db_id):
+    #print('get_sql', schema)
     toks = tokenize(query)
+    # print(schema.schema, toks)
     tables_with_alias = get_tables_with_alias(schema.schema, toks)
+    # print('get_sql table_with_alias', tables_with_alias)
     _, sql = parse_sql(toks, 0, tables_with_alias, schema, db_id)
 
     return sql
@@ -613,7 +626,9 @@ def get_schema_from_json2(fpath):
         data = json.load(f)
 
     schemas = {}
+    table_schemas = []
     dbs = []
+    # #print('get_schema_from_json2', data)
     for entry in data:
         schema = {}
         db_id = entry["db_id"]
@@ -623,11 +638,12 @@ def get_schema_from_json2(fpath):
         table_names_original = entry.get("table_names_original", entry["table_names"])
         column_names_original = entry.get("column_names_original", entry["column_names"])
         type_ = entry.get("column_types", [])
-        print(column_names_original, type_)
+        # #print(column_names_original, type_)
         assert len(column_names_original) == len(type_), "%d,%d" % (len(column_names_original), len(type_))
         db_tables = {}
         db["tables"] = db_tables
         for i, table in enumerate(table_names_original):
+            #print('get_schema_from_json2', table_names_original)
             header = []
             cells = []
             db_tables[table] = {"cell": cells, "header": header, "table_name": table, "type": type_}
@@ -652,13 +668,14 @@ def get_schema_from_json2(fpath):
                     else:
                         cell.append("")
                 cells.append(cell)
-        schemas[db_id] = Schema(
-            schema, table_names_original, column_names_original)
+        #print("get_schema_from_json2", schemas)
+        schemas[db_id] = Schema(schema, table_names_original, column_names_original)
     return schemas, dbs
 
 import pymysql
 import pandas as pd
 import numpy as np
+
 def get_mysql_conn():
     conn = pymysql.connect(host='192.168.209.110', port=3307, user='messi', password='messi', charset='utf8',
                            database='kg')
@@ -669,79 +686,88 @@ def get_data_from_db(sql):
     rst = pd.read_sql(sql, conn)
     return rst
 
-def generate_schema():
-    results = []
-    result = {"db_id":"kg"}
-    schema_df =pd.read_excel('D:\work_task\RAT-SQL\数据生成\表结构.xlsx')
-    result["table_names"] = ["基金表","基金经理表","机构表"]
-    # result["table_names"] = ["基金表"]
-    result["table_names_original"] = result["table_names"]
-    result["column_types"] = ["text"]
-    result["column_names"] = [[-1,"*"]]
-    result['foreign_keys'] = []
-    result['primary_keys'] = []
-    for idx,row in schema_df.iterrows():
-        col_name = row['列名']
-        col_type = str(row['字段类型'])
-        table_name = row['表名']
-        pk = row['主键']
-        fk = row['外键']
-        if col_type.startswith('varchar') or col_type.startswith('text'):
-            col_type = 'text'
-        elif col_type.startswith('double'):
-            col_type = 'number'
-        elif col_type.startswith('date'):
-            col_type = 'time'
-        else:
-            raise Exception('new Type %s' % (col_type))
-        if pk == 'pk':
-            result['primary_keys'].append(idx+1)
-
-        if not pd.isnull(fk):
-            result['foreign_keys'].append([idx+1,int(fk)])
-
-        result["column_names"].append([result["table_names"].index(table_name),col_name])
-        result["column_types"].append(col_type)
-    result['column_names_original'] = result["column_names"]
-
-    results.append(result)
-    json.dump(results,open('D:\work_task\RAT-SQL\数据生成\db_schema.json',encoding='utf-8',mode='w'),ensure_ascii=False)
-
-
-def generate_content():
-    results = []
-    result = {"db_id":"kg","tables": {}}
-    entity_df = pd.read_excel('D:\work_task\RAT-SQL\数据生成\样例实体.xlsx')
-    fund_list = []
-    company_list = []
-    manager_list = []
-    for idx, row in entity_df.iterrows():
-        if row['实体类型'] == '基金':
-            fund_list.append(str(row['实体']))
-
-        if row['实体类型'] == '基金经理':
-            manager_list.append(str(row['实体']))
-
-        if row['实体类型'] == '机构':
-            company_list.append(str(row['实体']))
+# def generate_schema():
+#     results = []
+#     result = {"db_id":"kg"}
+#     schema_df =pd.read_excel('C:/Users/yifan.zhao01/Desktop/模板.xlsx')
+#     #print(schema_df)
+#     result["table_names"] = ["基金表", "基金经理表", "机构表"]
+#     # result["table_names"] = ["基金表"]
+#     result["table_names_original"] = result["table_names"]
+#     result["column_types"] = ["text"]
+#     result["column_names"] = [[-1,"*"]]
+#     result['foreign_keys'] = []
+#     result['primary_keys'] = []
+#     for idx,row in schema_df.iterrows():
+#         col_name = row['列名']
+#         col_type = str(row['字段类型'])
+#         table_name = row['表名']
+#         pk = row['主键']
+#         fk = row['外键']
+#         if col_type.startswith('varchar') or col_type.startswith('text'):
+#             col_type = 'text'
+#         elif col_type.startswith('double'):
+#             col_type = 'number'
+#         elif col_type.startswith('date'):
+#             col_type = 'time'
+#         else:
+#             raise Exception('new Type %s' % (col_type))
+#         if pk == 'pk':
+#             result['primary_keys'].append(idx+1)
+#
+#         if not pd.isnull(fk):
+#             result['foreign_keys'].append([idx+1,int(fk)])
+#
+#         result["column_names"].append([result["table_names"].index(table_name),col_name])
+#         result["column_types"].append(col_type)
+#     result['column_names_original'] = result["column_names"]
+#
+#     results.append(result)
+#     json.dump(results,open('C:/Users/yifan.zhao01/Desktop/db_schema.json',encoding='utf-8',mode='w'),ensure_ascii=False)
 
 
-    table_detail = generate_table_cells(fund_list,"基金表","基金全称")
-    result["tables"].update(table_detail)
-
-    table_detail = generate_table_cells(manager_list,"基金经理表","经理姓名")
-    result["tables"].update(table_detail)
-
-    table_detail = generate_table_cells(company_list,"机构表","机构名称")
-    result["tables"].update(table_detail)
-    results.append(result)
-    json.dump(results, open('D:\work_task\RAT-SQL\数据生成\db_content.json', encoding='utf-8', mode='w'), ensure_ascii=False)
+# def generate_content():
+#     results = []
+#     result = {"db_id":"kg","tables": {}}
+#     entity_df = pd.read_excel('D:/work_task/RAT-SQL/数据生成/样例实体.xlsx')
+#     fund_list = []
+#     company_list = []
+#     manager_list = []
+#     for idx, row in entity_df.iterrows():
+#         if row['实体类型'] == '基金':
+#             fund_list.append(str(row['实体']))
+#
+#         if row['实体类型'] == '基金经理':
+#             manager_list.append(str(row['实体']))
+#
+#         if row['实体类型'] == '机构':
+#             company_list.append(str(row['实体']))
+#
+#
+#     table_detail = generate_table_cells(fund_list,"基金表","基金全称")
+#     result["tables"].update(table_detail)
+#
+#     table_detail = generate_table_cells(manager_list,"基金经理表","经理姓名")
+#     result["tables"].update(table_detail)
+#
+#     table_detail = generate_table_cells(company_list,"机构表","机构名称")
+#     result["tables"].update(table_detail)
+#     results.append(result)
+#     json.dump(results, open('D:\work_task\RAT-SQL\数据生成\db_content.json', encoding='utf-8', mode='w'), ensure_ascii=False)
 
 
 def generate_table_cells(fund_list,table_name,condition,colum_names ='*'):
+    """
 
-    schema_df = pd.read_excel('D:\work_task\RAT-SQL\数据生成\表结构.xlsx')
-    types= []
+    :param fund_list: 基金列
+    :param table_name: 表名
+    :param condition: 结构
+    :param colum_names:
+    :return:
+    """
+
+    schema_df = pd.read_excel('C:/Users/yifan.zhao01/Desktop/模板.xlsx')
+    types = []
     for col_type in schema_df[schema_df['表名'] == table_name]['字段类型'].values:
         if col_type.startswith('varchar') or col_type.startswith('text'):
             types.append('text')
@@ -806,102 +832,100 @@ def convert_schema():
             schema, table_names_original, column_names_original)
     return schemas, dbs
 
+def process(file1,file2, train,val,test, schemas):
+    df_datas = pd.read_excel(file1)
+    df_datas = df_datas.sort_values('RAND', ascending=False).groupby(['表名', '属性名']).head(50)
+    df_select_entity_from_single_attr = pd.read_excel(file2)
+    #print(len(df_datas))
+    df_datas = pd.concat([df_datas, df_select_entity_from_single_attr], axis=0)
+    #print(len(df_datas))
+    df_datas = df_datas.sample(frac=1, random_state=666).reset_index(drop=True)
 
+    train_size = int(len(df_datas) * 0.8)
+    val_size = int(len(df_datas) * 0.1)
+    test_size = int(len(df_datas) * 0.1)
+    # test_size = 10
 
+    real_train = []
 
+    for idx, row in df_datas.loc[0:train_size].iterrows():
+        data = {}
+        data["db_id"] = 'kg'
+        data["query"] = str(row['SQL'])
+        data["question"] = str(row['NL'])
+        data["question_id"] = "qid" + str(idx)
+        sql_ast = get_sql(schemas[db_id], str(row['SQL']), db_id)
+        data["sql"] = sql_ast
+        train.append(data)
+        real_train.append("%s#%s" % (str(row['NL']), str(row['SQL'])))
+    #print(len(train))
 
+    real_vals = []
+    for idx, row in df_datas.loc[train_size:train_size + val_size].iterrows():
+        data = {}
+        data["db_id"] = 'kg'
+        data["query"] = str(row['SQL'])
+        data["question"] = str(row['NL'])
+        data["question_id"] = "qid" + str(idx)
+        sql_ast = get_sql(schemas[db_id], str(row['SQL']), db_id)
+        data["sql"] = sql_ast
+        val.append(data)
+    #print(len(val))
 
-
-
-
-
-
+    for idx, row in df_datas.loc[train_size + val_size:].iterrows():
+        data = {}
+        data["db_id"] = 'kg'
+        data["query"] = str(row['SQL'])
+        data["question"] = str(row['NL'])
+        data["question_id"] = "qid" + str(idx)
+        sql_ast = get_sql(schemas[db_id], str(row['SQL']), db_id)
+        data["sql"] = sql_ast
+        test.append(data)
+        real_vals.append("%s#%s" % (str(row['NL']), str(row['SQL'])))
+    #print(len(test))
+    return real_vals, real_train
 
 
 if __name__ == "__main__":
-    db_id = "db_id"
-    query = "select 明星id from 离异明星 order by 离异时间 asc"
+    db_id = "kg"
+    query = "SELECT 机构表.机构名称 FROM 基金经理表 join 机构表 where 机构表.机构代码 = 基金经理表.机构代码 " \
+            "and 基金经理表.经理姓名 = '上海铭泓私募基金' limit 1;"
+    test1 = get_schema("E:\project\da orderta\DuSQL\db_schema.json")
+
+    schema_df = pd.read_excel('C:/Users/yifan.zhao01/Desktop/模板.xlsx', sheet_name='实体查多属性模板')
+
     schemas = get_schema_from_json2(
         "E:\project\data\DuSQL\db_schema.json")
-    # print(schema)
-    sql = get_sql(schemas[db_id], query, db_id)
-    print(sql)
+    ##print('获得schemas')
+
+    sql = get_sql(schemas[0][db_id], query, db_id)
+    #print('获得sql')
+    #print(json.dumps(sql))
     # sss = json.dumps(sql, indent=2, ensure_ascii=False)
-    # print(sss)
-    db_id = "kg"
-    # schemas, dbs = get_schema_from_json2(
-    #     "/data/text2sql_learn/pro/rat-sql/data/howbuy/db_schema.json")
-    generate_schema()
-    generate_content()
-    schemas, dbs = convert_schema()
-
-
-
-
-    def process(file1,file2, train,val,test):
-        df_datas = pd.read_excel(file1)
-        df_datas = df_datas.sort_values('RAND', ascending=False).groupby(['表名','属性名']).head(50)
-        df_select_entity_from_single_attr = pd.read_excel(file2)
-        print(len(df_datas))
-        df_datas = pd.concat([df_datas,df_select_entity_from_single_attr],axis=0)
-        print(len(df_datas))
-        df_datas = df_datas.sample(frac=1,random_state=666).reset_index(drop=True)
-
-        train_size = int(len(df_datas) * 0.8)
-        val_size = int(len(df_datas) * 0.1)
-        test_size = int(len(df_datas) * 0.1)
-        # test_size = 10
-
-        real_train=[]
-
-        for idx,row in df_datas.loc[0:train_size].iterrows():
-            data = {}
-            data["db_id"] = 'kg'
-            data["query"] = str(row['SQL'])
-            data["question"] = str(row['NL'])
-            data["question_id"] = "qid" + str(idx)
-            sql_ast = get_sql(schemas[db_id], str(row['SQL']), db_id)
-            data["sql"] = sql_ast
-            train.append(data)
-            real_train.append("%s#%s" % (str(row['NL']), str(row['SQL'])))
-        print(len(train))
-
-        real_vals = []
-        for idx,row in df_datas.loc[train_size:train_size+val_size].iterrows():
-            data = {}
-            data["db_id"] = 'kg'
-            data["query"] = str(row['SQL'])
-            data["question"] = str(row['NL'])
-            data["question_id"] = "qid" + str(idx)
-            sql_ast = get_sql(schemas[db_id], str(row['SQL']), db_id)
-            data["sql"] = sql_ast
-            val.append(data)
-        print(len(val))
-
-        for idx,row in df_datas.loc[train_size+val_size:].iterrows():
-            data = {}
-            data["db_id"] = 'kg'
-            data["query"] = str(row['SQL'])
-            data["question"] = str(row['NL'])
-            data["question_id"] = "qid" + str(idx)
-            sql_ast = get_sql(schemas[db_id], str(row['SQL']), db_id)
-            data["sql"] = sql_ast
-            test.append(data)
-            real_vals.append("%s#%s" % (str(row['NL']),str(row['SQL'])))
-        print(len(test))
-        return real_vals,real_train
-
-
-
-
-    train = []
-    dev = []
-    db_content = []
-    qid = 0
-    test = []
-    real_vals,real_train = process("D:\work_task\RAT-SQL\数据生成\实体查单属性.xlsx","D:\work_task\RAT-SQL\数据生成\单属性查实体.xlsx", train,dev,test)
-    # process("data/howbuy/sql-kg.txt", train)
-    # process("data/howbuy/test.sql", train)
+    # #print(sss)
+    # db_id = "kg"
+    # # schemas, dbs = get_schema_from_json2(
+    # #     "/data/text2sql_learn/pro/rat-sql/data/howbuy/db_schema.json")
+    # # generate_schema()
+    # # generate_content()
+    # schemas, dbs = convert_schema()
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    # train = []
+    # dev = []
+    # db_content = []
+    # qid = 0
+    # test = []
+    # real_vals,real_train = process("D:\work_task\RAT-SQL\数据生成\实体查单属性.xlsx","D:\work_task\RAT-SQL\数据生成\单属性查实体.xlsx", train,dev,test)
+    # # process("data/howbuy/sql-kg.txt", train)
+    # # process("data/howbuy/test.sql", train)
 
 
     # def process_test(file, train):
@@ -915,7 +939,7 @@ if __name__ == "__main__":
     #                 sql = sql_arr[-1].lower()
     #                 if "from" in sql:
     #                     sql = sql.replace("`", "").replace(";", "")
-    #                     print(sql_arr[0], sql_arr[-1])
+    #                     #print(sql_arr[0], sql_arr[-1])
     #                     data["query"] = ""
     #                     devdata["query"] = ""
     #                     data["db_id"] = db_id
@@ -927,7 +951,7 @@ if __name__ == "__main__":
     #                     sql_ast = get_sql(schemas[db_id], sql, db_id)
     #                     data["sql"] = ""
     #                     devdata["sql"] = ""
-    #                     print(sql_ast)
+    #                     #print(sql_ast)
     #                     train.append(data)
     #                     dev.append(devdata)
     #
@@ -935,13 +959,13 @@ if __name__ == "__main__":
     # process("data/howbuy/test.sql", test)
     #
 
-    json.dump(train,open("D:\work_task\RAT-SQL\数据生成\\train.json",encoding='utf-8',mode='w'),ensure_ascii=False)
-    json.dump(dev, open("D:\work_task\RAT-SQL\数据生成\\dev.json", encoding='utf-8', mode='w'), ensure_ascii=False)
-    json.dump(test, open("D:\work_task\RAT-SQL\数据生成\\test.json", encoding='utf-8', mode='w'), ensure_ascii=False)
-    with open("D:\work_task\RAT-SQL\数据生成\\test.sql", "w",encoding='utf-8') as w:
-        w.write('\n'.join(real_vals))
-    with open("D:\work_task\RAT-SQL\数据生成\\train.sql", "w",encoding='utf-8') as w:
-        w.write('\n'.join(real_train))
+    # json.dump(train,open("D:\work_task\RAT-SQL\数据生成\\train.json",encoding='utf-8',mode='w'),ensure_ascii=False)
+    # json.dump(dev, open("D:\work_task\RAT-SQL\数据生成\\dev.json", encoding='utf-8', mode='w'), ensure_ascii=False)
+    # json.dump(test, open("D:\work_task\RAT-SQL\数据生成\\test.json", encoding='utf-8', mode='w'), ensure_ascii=False)
+    # with open("D:\work_task\RAT-SQL\数据生成\\test.sql", "w",encoding='utf-8') as w:
+    #     w.write('\n'.join(real_vals))
+    # with open("D:\work_task\RAT-SQL\数据生成\\train.sql", "w",encoding='utf-8') as w:
+    #     w.write('\n'.join(real_train))
     # with open("D:\work_task\RAT-SQL\数据生成\\dev.json", "w",encoding='utf-8') as w:
     #     w.write(json.dumps(dev, indent=2, ensure_ascii=False))
     # with open("D:\work_task\RAT-SQL\数据生成\\test.json", "w") as w:
