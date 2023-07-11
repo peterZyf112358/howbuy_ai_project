@@ -21,7 +21,7 @@ def recognize_date(date_):
     if type(date_) == datetime:
         return [date_]
 
-    date_ = str(date_) + ' '
+    date_ = ' ' + str(date_) + ' '
 
     month_ = ['JAN', 'FEB', 'MAR', 'APR',
               'MAY', 'JUN', 'JUL', 'AUG',
@@ -120,7 +120,7 @@ def recognize_date(date_):
             if int(temp_.group(3)) <= 10:
                 mon_ = str(0) + str(temp_.group(3))
             result.append(str(temp_.group(1)) + '-' + mon_)
-    # 今年不带具体年份
+    # 今年不带具体日期
     elif re.search('\d{4}年[^\d]', date_):
         temp = re.findall('\d{4}年[^\d]', date_)[0]
         result.append(str(temp[0:4]))
@@ -140,6 +140,7 @@ def recognize_date(date_):
             else:
                 result.append(str(datetime.date.today().year))
     # 今年带月份日期
+
     elif re.search('今年\d{1,2}[月]\d{1,2}[号日]', date_):
         temp = re.findall('今年\d{1,2}[月]\d{1,2}[号日]', date_)
         for item in temp:
@@ -152,6 +153,22 @@ def recognize_date(date_):
             if int(temp_.group(4)) < 10:
                 day_ = str(0) + str(temp_.group(4))
             result.append(str(datetime.date.today().year) + '-' + mon_ + '-' + day_)
+
+    elif re.search('[^年]\d{1,2}[月]\d{1,2}[号日]', date_):
+        temp = re.findall('[^年]\d{1,2}[月]\d{1,2}[号日]', date_)
+        for item in temp:
+            temp_ = item.strip(' ')
+            temp_ = re.split('\D', temp_)
+
+            mon_ = str(temp_[0])
+            day_ = str(temp_[1])
+            if int(temp_[0]) < 10:
+                mon_ = str(0) + str(temp_[0])
+
+            if int(temp_[1]) < 10:
+                day_ = str(0) + str(temp_[1])
+            result.append(str(datetime.date.today().year) + '-' + str(mon_) + '-' + str(day_))
+
     # (少数)带'.'日期
     elif re.search('1?[\d]{1}\.[123]?[\d]{1}', date_):
         temp = re.findall('1?[\d]{1}\.[123]?[\d]{1}', date_)[0].split('.')
@@ -159,8 +176,8 @@ def recognize_date(date_):
         result.append(str(dates_))
 
     # 纯月份
-    elif re.search('[^上下这本今当前]?1?\d月[^\d][初末底]?[上下]?半?旬?', date_):
-        temp = re.findall('[^上下这本今当前]?1?\d月[^\d][初末底]?[上下]?半?旬?', date_)[0].split('月')
+    elif re.search('[^上下这本今当前]?[^年]1?\d月[^\d][初末底]?[上下]?半?旬?', date_):
+        temp = re.findall('[^上下这本今当前]?[^年]1?\d月[^\d][初末底]?[上下]?半?旬?', date_)[0].split('月')
         dates_ = datetime.date(datetime.date.today().year, int(temp[0]), 1)
 
         if '末' in temp[1] or '底' in temp[1]:
@@ -459,7 +476,8 @@ def datetime_transform(date_list: list):
 
 
 if __name__ == '__main__':
-    # data = recognize_date('上周')
+    data = recognize_date('3月3日')
+    print(data)
     # data1 = recognize_date('本周')
     # data2 = recognize_date('下周')
     # print(data,data1,data2)

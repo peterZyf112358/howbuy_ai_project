@@ -197,6 +197,7 @@ def parse_col(toks, start_idx, tables_with_alias, schema, default_tables=None):
     """
         :returns next idx, column id
     """
+    # print(toks)
     tok = toks[start_idx]
     if tok == "*":
         return start_idx + 1, schema.colId[tok]
@@ -888,8 +889,7 @@ def process(file1,file2, train,val,test, schemas):
 
 if __name__ == "__main__":
     db_id = "kg"
-    query = "SELECT 机构表.机构名称 FROM 基金经理表 join 机构表 where 机构表.机构代码 = 基金经理表.机构代码 " \
-            "and 基金经理表.经理姓名 = '上海铭泓私募基金' limit 1;"
+    query = "select 基金表.基金全称 from 基金表 where 基金表.到期日期 > '2021-02-01'"
     test1 = get_schema("E:\project\da orderta\DuSQL\db_schema.json")
 
     schema_df = pd.read_excel('C:/Users/yifan.zhao01/Desktop/模板.xlsx', sheet_name='实体查多属性模板')
@@ -899,6 +899,7 @@ if __name__ == "__main__":
     ##print('获得schemas')
 
     sql = get_sql(schemas[0][db_id], query, db_id)
+    print(sql)
     #print('获得sql')
     #print(json.dumps(sql))
     # sss = json.dumps(sql, indent=2, ensure_ascii=False)
