@@ -252,9 +252,9 @@ def test_all_json(json_file):
     try:
 
         for items in type_:
-            if count < 8550:
-                count += 1
-                continue
+            # if count < 8550:
+            #     count += 1
+            #     continue
             print(count)
             cursor.execute(items['query'])
             print(items['question'])
@@ -278,6 +278,6 @@ if __name__ == '__main__':
     # test_all_ba_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '单属性查实体模板', "A,C,G", others, enum)
     # test_al_bba_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '多属性查实体模板', "A:E, G", others, enum, rp)
 
-    test_all_json('C:/Users/yifan.zhao01/Desktop/train.json')
+    test_all_json('E:/project/data/DuSQL/train.json')
     cursor.close()
     conn.close()
