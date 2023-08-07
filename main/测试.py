@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import traceback
+
 import pymysql
 import pandas as pd
 import entity_load
@@ -48,8 +50,7 @@ def test_all_ba_command(path, table, usecols_, others_, enum_):
     try:
 
         for value in wb.values:
-
-            # if count < 450:
+            # if count < 100:
             #     count += 1
             #     continue
             # elif re.search('<\w{2,}>', value[2]):
@@ -58,7 +59,10 @@ def test_all_ba_command(path, table, usecols_, others_, enum_):
                 # print(value[2])
                 item = re.findall('<\w{2,}>', value[2])[0]
                 if value[1] == 'area_ratio' or value[1] == 'value_ratio' or value[1] == 'area_value':
-                    data_ = random.choice(others_['area_ratio'])
+                    if value[1] == 'area_ratio':
+                        data_ = random.choice(others_['area_ratio'])
+                    else:
+                        data_ = random.choice(others_['value_ratio'])
                     real_value = 表格实例拆分.value_ratio_to_value(data_)
                     # print(real_value)
                     temp = re.split('<\w{2,}>',value[2])
@@ -66,7 +70,7 @@ def test_all_ba_command(path, table, usecols_, others_, enum_):
                     cursor.execute(sql)
                 elif value[1] == 'enum':
                     data_ = random.choice(enum_[value[0]])
-                    # print(data_)
+
                     temp = re.split('<\w{2,}>', value[2])
                     sql = temp[0] + "'" + data_ + "'" + temp[1]
                     cursor.execute(sql)
@@ -74,6 +78,7 @@ def test_all_ba_command(path, table, usecols_, others_, enum_):
                     temp = re.split('<\w{2,}>', value[2])
                     real_value = None
                     value_ = random.choice(others_[value[1]])
+                    # print(value[1])
                     if value[1] == 'value':
                         real_value = 表格实例拆分.value_to_value(value_)
                     elif value[1] == 'ratio':
@@ -86,6 +91,7 @@ def test_all_ba_command(path, table, usecols_, others_, enum_):
                     elif value[1] == 'topk':
                         real_value = 表格实例拆分.topk_to_value(value_)
 
+                    print(real_value)
                     if real_value:
                         # print('进1')
                         sql = temp[0] + str(real_value) + temp[1]
@@ -98,9 +104,12 @@ def test_all_ba_command(path, table, usecols_, others_, enum_):
                 # if count % 10 == 0:
                 #     print(count)
     except Exception as e:
-        print(data_)
+        print('real_value',real_value)
+        print('data_',data_)
         print(value, value_)
+        print(traceback.format_exc())
         print('问题', e)
+
 
 def test_al_bba_command(path, table, usecols_, others_, enum_, relationship_path):
     """3列 第一列是 attr_name, 第二列是value_type, 第三列是 entity_type"""
@@ -272,12 +281,13 @@ if __name__ == '__main__':
                            database='kg')
     cursor = conn.cursor()
     enum, others, entity = entity_load.generate_dict('C:/Users/yifan.zhao01/desktop/模板.xlsx')
+    print(enum)
     rp = entity_load.generate_relationship('C:/Users/yifan.zhao01/desktop/模板.xlsx', "属性数值转换", "A:B")
-    # test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查单属性模板', 'C:D', entity, others)
-    # test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查多属性模板', 'F:G', entity, others)
-    # test_all_ba_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '单属性查实体模板', "A,C,G", others, enum)
-    # test_al_bba_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '多属性查实体模板', "A:E, G", others, enum, rp)
+    test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查单属性模板', 'C:D', entity, others)
+    test_all_a_ab_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '实体查多属性模板', 'F:G', entity, others)
+    test_all_ba_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '单属性查实体模板', "A,C,G", others, enum)
+    test_al_bba_command('C:/Users/yifan.zhao01/Desktop/模板.xlsx', '多属性查实体模板', "A:E, G", others, enum, rp)
 
-    test_all_json('E:/project/data/DuSQL/train.json')
+    # test_all_json('E:/project/data/DuSQL/train.json')
     cursor.close()
     conn.close()

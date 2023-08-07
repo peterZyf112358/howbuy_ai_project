@@ -874,12 +874,12 @@ def generate_data_db(excel_xlsx, output_path, test_path, dev_path, train1_path, 
         enum, others, entity = entity_load.generate_dict(excel_xlsx)
         rp = entity_load.generate_relationship(excel_xlsx, "属性数值转换", "A:B")
         count = 0
-        # list1 = [excel_xlsx, '实体查单属性模板', 'B,C,D', entity, others]
-        # count = data_structer_generater_a([list1], result, db_schema, result2, result3, train1, test2, True, count)
-        # print('a完成', count)
-        # list2 = [excel_xlsx, '实体查多属性模板', "A:G", enum, entity, others]
-        # count = data_structer_generater_ab([list2], result, db_schema, result2, result3, train1, test2, True, count)
-        # print('b完成', count)
+        list1 = [excel_xlsx, '实体查单属性模板', 'B,C,D', entity, others]
+        count = data_structer_generater_a([list1], result, db_schema, result2, result3, train1, test2, True, count)
+        print('a完成', count)
+        list2 = [excel_xlsx, '实体查多属性模板', "A:G", enum, entity, others]
+        count = data_structer_generater_ab([list2], result, db_schema, result2, result3, train1, test2, True, count)
+        print('b完成', count)
         list3 = [excel_xlsx, '单属性查实体模板', "A:C, G", others, enum]
         count = data_structer_generater_ba([list3], result, db_schema, result2, result3, train1, test2, True, count)
         print('c完成', count)

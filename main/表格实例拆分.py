@@ -29,18 +29,18 @@ def ratio_to_value(data_):
                 if item in chinese_number:
                     result.append(chinese_number.index(item))
                 elif item == '十':
-                    if data_[count-1] not in chinese_number and count == len(data_):
-                        result.append(str(10))
-                    elif data_.index(item) == len(data_):
-                        result.append(str(0))
-                    if data_[count-1] not in chinese_number:
-                        result.append(str(1))
+                    if data_[count-1] not in chinese_number and count == len(data_)-1:
+                        result.append(10)
+                    elif data_.index(item) == len(data_)-1:
+                        result.append(0)
+                    elif data_[count-1] not in chinese_number:
+                        result.append(1)
                 count += 1
     elif re.match('0.\d+',data_):
-        result.append((float(re.findall('0.\d+',data_)[0]) * 100))
+        result.append((float(re.findall('0.\d+',data_)[0])*100))
     else:
         return None
-    return float("".join([str(x) for x in result]))
+    return float("".join([str(x) for x in result]))/100
 
 
 def value_to_value(value):
@@ -60,7 +60,7 @@ def value_to_value(value):
             if item == '亿':
                 result.append('00000000')
             if item == '万':
-                result.append('00000')
+                result.append('0000')
             if item == '千':
                 result.append('000')
             if item == '百':
@@ -77,27 +77,42 @@ def value_ratio_to_value(value):
         units = re.findall('[一二三四五六七八九十]十?[一二三四五六七八九]?', value)
         if len(units) == 1:
             result.append('0')
-            result.append(str(cn2an.cn2an(units[0])))
+            result.append(str(cn2an.cn2an(units[0])/100))
         else:
             for item in units:
-                result.append(str(cn2an.cn2an(item)))
+                result.append(str(cn2an.cn2an(item)/100))
     elif re.search('百分之\d{2}-?\d{2}\d?', value):
         units= re.findall('百分之\d{2}-?\d{2}\d?', value)[0]
         if '-' not in units:
             numbers = re.findall('\d+', units)[0]
             result.append('0')
-            result.append(str(numbers))
+            result.append(str(int(numbers)/100))
         else:
             numbers = re.findall('\d+', units)
             for item in numbers:
-                result.append(str(item))
-    elif re.match('\d+-\d[亿万千]+',value):
-        units = re.findall('\d+-\d[亿万千]+', value)[0]
+                result.append(str(int(item)/100))
+    elif re.match('\d+[-至到]+\d+[亿万千]+',value):
+        units = re.findall('[亿万千]', value)[0]
         for item in re.findall('\d+',value):
             result.append(str(value_to_value(item+units)))
-    elif re.match('\d+[%]{0,1}[亿万千]*', value):
-        for item in re.findall('\d+[%]{0,1}[亿万千]*', value):
-            result.append(str(value_to_value(item)))
+    elif re.match('\d+[亿万千]+[-至到]+\d+[亿万千]+',value):
+        units = re.findall('[亿万千]+', value)
+        units1 = units[0]
+        units2 = units[1]
+        index = 0
+        for item in re.findall('\d+',value):
+            if index == 0:
+                result.append(str(value_to_value(item+units1)))
+            elif index == 1:
+                result.append(str(value_to_value(item + units2)))
+            index += 1
+    elif re.match('\d+-\d+个点',value) or re.match('\d+%?[-至到]+\d+%',value):
+        for item in re.findall('\d+',value):
+            result.append(str(value_to_value(item)/100))
+    # elif re.match('\d+[%]{0,1}[亿万千]*', value):
+    #     print(4)
+    #     for item in re.findall('\d+[%]{0,1}[亿万千]*', value):
+    #         result.append(str(value_to_value(item)))
     else:
         return None
     return result
@@ -125,10 +140,9 @@ def check_type_and_return(type, value):
 
 
 if __name__ == '__main__':
-    print(ratio_to_value('百分之十'))
+    print(ratio_to_value('0.7'))
     # print(value_ratio_to_value('21-30万'))
     # print(topk_to_value('前6'))
     # output = cn2an.cn2an('五千万')
     # print(check_value('五千万'))
-    print(value_to_value('一个亿'))
-    print(type(topk_to_value('第1')))
+    print(value_ratio_to_value('1千万至25亿'))
