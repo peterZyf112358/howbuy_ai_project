@@ -11,7 +11,7 @@ def transpose(X):
 
 
 def load_entity(path, sheet_name, usecols, dict_):
-    wb = pd.read_excel(path, sheet_name=sheet_name, usecols=usecols, header=1)
+    wb = pd.read_excel(path, sheet_name=sheet_name, usecols=usecols, header=0)
     header = []
     for value in wb.values:
         header.append(value)
@@ -44,17 +44,18 @@ def generate_relationship(path, table, usecols):
 
 if __name__ == '__main__':
     enum, others, entity = generate_dict('C:/Users/yifan.zhao01/Desktop/模板.xlsx')
-    # print(enum, others, entity)
-    f1 = "C:/Users/yifan.zhao01/Desktop/数据1.json"
-    f1 = open(f1, encoding='utf-8', mode='w')
-    f2 = open("C:/Users/yifan.zhao01/Desktop/数据2.json", encoding='utf-8', mode='w')
-    f3 = open("C:/Users/yifan.zhao01/Desktop/数据3.json", encoding='utf-8', mode='w')
-    json.dump(enum, f1)
-    json.dump(others, f2)
-    json.dump(entity, f3)
-    f1.close()
-    f2.close()
-    f3.close()
+
+
+    # f1 = "C:/Users/yifan.zhao01/Desktop/数据1.json"
+    # f1 = open(f1, encoding='utf-8', mode='w')
+    # f2 = open("C:/Users/yifan.zhao01/Desktop/数据2.json", encoding='utf-8', mode='w')
+    # f3 = open("C:/Users/yifan.zhao01/Desktop/数据3.json", encoding='utf-8', mode='w')
+    # json.dump(enum, f1)
+    # json.dump(others, f2)
+    # json.dump(entity, f3)
+    # f1.close()
+    # f2.close()
+    # f3.close()
 
     # print(entity['fund'])
     # for item in others['date']:

@@ -68,7 +68,6 @@ def db_struct_generate(list_of_name, write_file):
 
     return json.dumps(result, ensure_ascii=False)
 
-
 def data_content_generate(list_of_name, write_file):
     result = []
     result_dict = {'db_id': "kg"}
@@ -89,7 +88,15 @@ def data_content_generate(list_of_name, write_file):
         temp['header'] = column_names
         temp["table_name"] = name
         temp['type'] = column_types
-        cursor.execute('select * from kg.' + name + ' limit 10000')
+        if name == '基金表':
+            cursor.execute("select * from kg.基金表 where kg.基金表.基金分类 != '' limit 12000")
+        else:
+            cursor.execute('select * from kg.' + name)
+        # list_item = cursor.fetchone()
+        # while list_item:
+        #     # print(list_item)
+        #     cell.append(list(list_item))
+        #     list_item = cursor.fetchone()
         list_item = cursor.fetchall()
         for item in list_item:
             cell.append(list(item))
@@ -99,6 +106,7 @@ def data_content_generate(list_of_name, write_file):
     result.append(result_dict)
     f2 = open(write_file, mode='w', encoding="utf-8")
     # f2.write(json.dumps(result, ensure_ascii=False))
+    # f2.write(str(result))
     json.dump(result, f2, ensure_ascii=False)
     f2.close()
     return
@@ -146,7 +154,7 @@ def data_structer_generater_a(list_of_info, result, schema_, result2, result3, t
                     test_2.append(question_ + '#' + query + '\n')
                     temp_dict = {}
                     count += 1
-                elif test_ and count % 4 == 0:
+                elif test_ and count % 10 % 4 == 0:
                     # temp_dict.pop("sql")
                     # temp_dict.pop("query")
                     # temp_dict['query'] = ""
@@ -238,7 +246,7 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
 
                         temp_dict = {}
                         count += 1
-                    elif test_ and count % 4 == 0:
+                    elif test_ and count % 10 % 4 == 0:
                         # temp_dict.pop("sql")
                         # temp_dict.pop("query")
                         # temp_dict['query'] = ""
@@ -313,7 +321,7 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                         test_2.append(question_ + '#' + query + '\n')
                         temp_dict = {}
                         count += 1
-                    elif test_ and count % 4 == 0:
+                    elif test_ and count % 10 % 4 == 0:
                         # temp_dict.pop("sql")
                         # temp_dict.pop("query")
                         # temp_dict['query'] = ""
@@ -353,7 +361,7 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                             test_2.append(question_ + '#' + query + '\n')
                             temp_dict = {}
                             count += 1
-                        elif test_ and count % 4 == 0:
+                        elif test_ and count % 10 % 4 == 0:
                             # temp_dict.pop("sql")
                             # temp_dict.pop("query")
                             # temp_dict['query'] = ""
@@ -400,7 +408,7 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                                 test_2.append(question_ + '#' + query + '\n')
                                 temp_dict = {}
                                 count += 1
-                            elif test_ and count % 4 == 0:
+                            elif test_ and count % 10 % 4 == 0:
                                 # temp_dict.pop("sql")
                                 # temp_dict.pop("query")
                                 # temp_dict['query'] = ""
@@ -446,7 +454,7 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                                 test_2.append(question_ + '#' + query + '\n')
                                 temp_dict = {}
                                 count += 1
-                            elif test_ and count % 4 == 0:
+                            elif test_ and count % 10 % 4 == 0:
                                 # temp_dict.pop("sql")
                                 # temp_dict.pop("query")
                                 # temp_dict['query'] = ""
@@ -512,7 +520,7 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                         test_2.append(question_ + '#' + query + '\n')
                         temp_dict = {}
                         count += 1
-                    elif test_ and count % 4 == 0:
+                    elif test_ and count % 10 % 4 == 0:
                         # temp_dict.pop("sql")
                         # temp_dict.pop("query")
                         # temp_dict['query'] = ""
@@ -585,36 +593,51 @@ def data_structer_generater_ba(list_of_info, result, schema_, result2, result3, 
                             temp_sql.insert(1, "'" + input_data[0] + "'")
                             org_sql = "".join(temp_sql)
                     else:
-                        # print(input_data, '3')
-                        temp_sql = re.split('<\w*>', org_sql)
-                        temp_sql.insert(1, "'" + str(input_data) + "'")
-                        org_sql = "".join(temp_sql)
+                        if isfloat(str(input_data)) or isnum(str(input_data)):
+                            temp_sql = re.split('<\w*>', org_sql)
+                            temp_sql.insert(1, str(input_data))
+                            org_sql = "".join(temp_sql)
+                        else:
+                            temp_sql = re.split('<\w*>', org_sql)
+                            temp_sql.insert(1, "'" + str(input_data) + "'")
+                            org_sql = "".join(temp_sql)
                 # print(question)
                 temp_dict["db_id"] = "kg"
-                temp_dict["query"] = org_sql
+
                 temp_dict["question"] = question
                 temp_dict['question_id'] = 'qid' + str(count)
                 query = "".join(org_sql.split('kg.'))
+                temp_dict["query"] = query
                 temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
                 # print(temp_sql)
-                if test_ and count % 5 == 0:
+                if test_ and count % 10 == 0:
                     # temp_dict.pop("sql")
                     # temp_dict.pop("query")
                     # temp_dict['query'] = ""
                     # temp_dict['sql'] = ""
                     result2.append(temp_dict)
                     test_2.append(question + '#' + query + '\n')
-                    temp_dict = {}
-                    count += 1
-                elif test_ and count % 4 == 0:
-                    # temp_dict.pop("sql")
-                    # temp_dict.pop("query")
-                    # temp_dict['query'] = ""
-                    # temp_dict['sql'] = ""
                     result3.append(temp_dict)
-
                     temp_dict = {}
                     count += 1
+                # if test_ and count % 5 == 0:
+                #     # temp_dict.pop("sql")
+                #     # temp_dict.pop("query")
+                #     # temp_dict['query'] = ""
+                #     # temp_dict['sql'] = ""
+                #     result2.append(temp_dict)
+                #     test_2.append(question + '#' + query + '\n')
+                #     temp_dict = {}
+                #     count += 1
+                # elif test_ and count % 10 % 4 == 0:
+                #     # temp_dict.pop("sql")
+                #     # temp_dict.pop("query")
+                #     # temp_dict['query'] = ""
+                #     # temp_dict['sql'] = ""
+                #     result3.append(temp_dict)
+                #
+                #     temp_dict = {}
+                #     count += 1
                 else:
                     result.append(temp_dict)
                     train_1.append(question + '#' + query + '\n')
@@ -785,30 +808,43 @@ def data_structer_generater_bba(list_of_info, result, schema_, result2, result3,
                             org_sql = "".join(org_sql)
                     # print(question)
                     temp_dict["db_id"] = "kg"
-                    temp_dict["query"] = org_sql
+
                     temp_dict["question"] = question
                     temp_dict['question_id'] = 'qid' + str(count)
                     query = "".join(org_sql.split('kg.'))
+                    temp_dict["query"] = query
                     temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
                     # print(temp_sql)
-                    if test_ and count % 5 == 0:
+
+                    if test_ and count % 10 == 0:
                         # temp_dict.pop("sql")
                         # temp_dict.pop("query")
                         # temp_dict['query'] = ""
                         # temp_dict['sql'] = ""
                         result2.append(temp_dict)
                         test_2.append(question + '#' + query + '\n')
-                        temp_dict = {}
-                        count += 1
-                    elif test_ and count % 4 == 0:
-                        # temp_dict.pop("sql")
-                        # temp_dict.pop("query")
-                        # temp_dict['query'] = ""
-                        # temp_dict['sql'] = ""
                         result3.append(temp_dict)
-
                         temp_dict = {}
                         count += 1
+                    # if test_ and count % 5 == 0:
+                    #     # temp_dict.pop("sql")
+                    #     # temp_dict.pop("query")
+                    #     # temp_dict['query'] = ""
+                    #     # temp_dict['sql'] = ""
+                    #     result2.append(temp_dict)
+                    #     test_2.append(question + '#' + query + '\n')
+                    #
+                    #     temp_dict = {}
+                    #     count += 1
+                    # elif test_ and count % 10 % 4 == 0:
+                    #     # temp_dict.pop("sql")
+                    #     # temp_dict.pop("query")
+                    #     # temp_dict['query'] = ""
+                    #     # temp_dict['sql'] = ""
+                    #     result3.append(temp_dict)
+                    #
+                    #     temp_dict = {}
+                    #     count += 1
                     else:
                         result.append(temp_dict)
                         train_1.append(question + '#' + query + '\n')
@@ -837,46 +873,68 @@ def generate_data_db(excel_xlsx, output_path, test_path, dev_path, train1_path, 
     try:
         enum, others, entity = entity_load.generate_dict(excel_xlsx)
         rp = entity_load.generate_relationship(excel_xlsx, "属性数值转换", "A:B")
-        list1 = [excel_xlsx, '实体查单属性模板', 'B,C,D', entity, others]
         count = 0
-        count = data_structer_generater_a([list1], result, db_schema, result2, result3, train1, test2, True, count)
-        print('a完成', count)
-        list2 = [excel_xlsx, '实体查多属性模板', "A:G", enum, entity, others]
-        count = data_structer_generater_ab([list2], result, db_schema, result2, result3, train1, test2, True, count)
-        print('b完成', count)
-        # list3 = [excel_xlsx, '单属性查实体模板', "A:C, G", others, enum]
-        # count = data_structer_generater_ba([list3], result, db_schema, result2, True, count)
-        # print('c完成', count)
-        # list4 = [excel_xlsx, '多属性查实体模板', "A:G", others, enum, rp]
-        # count = data_structer_generater_bba([list4], result, db_schema, result2, True, count)
-        # print('d完成', count)
+        # list1 = [excel_xlsx, '实体查单属性模板', 'B,C,D', entity, others]
+        # count = data_structer_generater_a([list1], result, db_schema, result2, result3, train1, test2, True, count)
+        # print('a完成', count)
+        # list2 = [excel_xlsx, '实体查多属性模板', "A:G", enum, entity, others]
+        # count = data_structer_generater_ab([list2], result, db_schema, result2, result3, train1, test2, True, count)
+        # print('b完成', count)
+        list3 = [excel_xlsx, '单属性查实体模板', "A:C, G", others, enum]
+        count = data_structer_generater_ba([list3], result, db_schema, result2, result3, train1, test2, True, count)
+        print('c完成', count)
+        list4 = [excel_xlsx, '多属性查实体模板', "A:G", others, enum, rp]
+        count = data_structer_generater_bba([list4], result, db_schema, result2, result3, train1, test2, True, count)
+        print('d完成', count)
     except Exception as e:
         print(traceback.format_exc())
         print(e)
         sys.exit(1)
     finally:
         f1 = open(output_path, mode='w', encoding="utf-8")
-        f1.write(json.dumps(result))
+        f1.write(json.dumps(result, ensure_ascii=False))
         f2 = open(test_path, mode='w', encoding="utf-8")
-        f2.write(json.dumps(result2))
+        f2.write(json.dumps(result2, ensure_ascii=False))
         f3 = open(dev_path, mode='w', encoding="utf-8")
-        f3.write(json.dumps(result3))
+        f3.write(json.dumps(result3, ensure_ascii=False))
         f4 = open(train1_path, mode='w', encoding="utf-8")
         for item in train1:
             if '\n\n\n' in item:
                 item = "\n\n".strip(item)
+            elif '\n\n' in item:
+                item = "\n".strip(item)
             f4.write(item)
+
         f5 = open(test2_path, mode='w', encoding="utf-8")
         for item in test2:
             if '\n\n\n' in item:
                 item = "\n\n".strip(item)
+            elif '\n\n' in item:
+                item = "\n".strip(item)
             f5.write(item)
         # print(result)
         f1.close()
         f2.close()
         f3.close()
+        f4.close()
+        f5.close()
         print('导出成功')
 
+
+### helper function
+def isfloat(num):
+    try:
+        float(num)
+        return True
+    except ValueError:
+        return False
+
+def isnum(num):
+    try:
+        int(num)
+        return True
+    except ValueError:
+        return False
 
 if __name__ == "__main__":
     conn = pymysql.connect(host='192.168.209.110', port=3307, user='messi', password='messi', charset='utf8',
