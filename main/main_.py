@@ -11,6 +11,7 @@ import pymysql
 import entity_load
 import 表格实例拆分
 import 转译文件.mysql2dusql as m_d
+import sql语句生成辅助.fetch_name as fetch_name
 
 
 def db_struct_generate(list_of_name, write_file):
@@ -122,7 +123,7 @@ def data_structer_generater_a(list_of_info, result, schema_, result2, result3, t
             # if count >= 500:
             #     count += 1
             #     continue
-
+            
             for value in wb.values:
                 # print('value', value)
                 # if count > 500:
@@ -138,33 +139,24 @@ def data_structer_generater_a(list_of_info, result, schema_, result2, result3, t
                 temp_dict["db_id"] = "kg"
                 # temp_dict["query"] = sql_
                 # 改成无db名字的格式
-                temp_dict["query"] = query
+                temp_dict["query"] = query.strip('\n')
                 temp_dict["question"] = question_
                 temp_dict['question_id'] = 'qid' + str(count)
 
                 # print(query)
                 q_json = m_d.get_sql(schema_, query, 'kg')
                 temp_dict["sql"] = q_json
-                if test_ and count % 5 == 0:
+                if test_ and count % 10 == 0:
                     # temp_dict.pop("sql")
                     # temp_dict.pop("query")
                     # temp_dict['query'] = ""
                     # temp_dict['sql'] = ""
                     result2.append(temp_dict)
+                    result3.append(temp_dict)
                     test_2.append(question_ + '#' + query + '\n')
                     temp_dict = {}
                     count += 1
-                elif test_ and count % 10 % 4 == 0:
-                    # temp_dict.pop("sql")
-                    # temp_dict.pop("query")
-                    # temp_dict['query'] = ""
-                    # temp_dict['sql'] = ""
-                    result3.append(temp_dict)
-
-                    temp_dict = {}
-                    count += 1
                 else:
-
                     result.append(temp_dict)
                     train_1.append(question_ + '#' + query + '\n')
                     temp_dict = {}
@@ -231,7 +223,7 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                     query = "".join(sql_.split('kg.'))
                     # temp_dict["query"] = sql_
                     # 改成无db名字的格式
-                    temp_dict["query"] = query
+                    temp_dict["query"] = query.strip('\n')
                     temp_dict["question"] = question_
                     temp_dict['question_id'] = 'qid' + str(count)
 
@@ -242,16 +234,8 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                         # temp_dict['query'] = ""
                         # temp_dict['sql'] = ""
                         result2.append(temp_dict)
-                        test_2.append(question_ + '#' + query + '\n')
-
-                        temp_dict = {}
-                        count += 1
-                    elif test_ and count % 10 % 4 == 0:
-                        # temp_dict.pop("sql")
-                        # temp_dict.pop("query")
-                        # temp_dict['query'] = ""
-                        # temp_dict['sql'] = ""
                         result3.append(temp_dict)
+                        test_2.append(question_ + '#' + query + '\n')
 
                         temp_dict = {}
                         count += 1
@@ -308,26 +292,18 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                     query = "".join(sql_.split('kg.'))
                     # temp_dict["query"] = sql_
                     # 改成无db名字的格式
-                    temp_dict["query"] = query
+                    temp_dict["query"] = query.strip('\n')
                     temp_dict["question"] = question_
                     temp_dict['question_id'] = 'qid' + str(count)
                     temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
-                    if test_ and count % 5 == 0:
+                    if test_ and count % 10 == 0:
                         # temp_dict.pop("sql")
                         # temp_dict.pop("query")
                         # temp_dict['query'] = ""
                         # temp_dict['sql'] = ""
                         result2.append(temp_dict)
                         test_2.append(question_ + '#' + query + '\n')
-                        temp_dict = {}
-                        count += 1
-                    elif test_ and count % 10 % 4 == 0:
-                        # temp_dict.pop("sql")
-                        # temp_dict.pop("query")
-                        # temp_dict['query'] = ""
-                        # temp_dict['sql'] = ""
                         result3.append(temp_dict)
-
                         temp_dict = {}
                         count += 1
                     else:
@@ -349,25 +325,17 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                         query = "".join(sql_.split('kg.'))
                         # temp_dict["query"] = sql_
                         # 改成无db名字的格式
-                        temp_dict["query"] = query
+                        temp_dict["query"] = query.strip('\n')
                         temp_dict["question"] = question_
                         temp_dict['question_id'] = 'qid' + str(count)
-                        if test_ and count % 5 == 0:
+                        if test_ and count % 10 == 0:
                             # temp_dict.pop("sql")
                             # temp_dict.pop("query")
                             # temp_dict['query'] = ""
                             # temp_dict['sql'] = ""
                             result2.append(temp_dict)
-                            test_2.append(question_ + '#' + query + '\n')
-                            temp_dict = {}
-                            count += 1
-                        elif test_ and count % 10 % 4 == 0:
-                            # temp_dict.pop("sql")
-                            # temp_dict.pop("query")
-                            # temp_dict['query'] = ""
-                            # temp_dict['sql'] = ""
                             result3.append(temp_dict)
-
+                            test_2.append(question_ + '#' + query + '\n')
                             temp_dict = {}
                             count += 1
                         else:
@@ -395,26 +363,18 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                             query = "".join(sql_.split('kg.'))
                             # temp_dict["query"] = sql_
                             # 改成无db名字的格式
-                            temp_dict["query"] = query
+                            temp_dict["query"] = query.strip('\n')
                             temp_dict["question"] = question_
                             temp_dict['question_id'] = 'qid' + str(count)
                             temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
-                            if test_ and count % 5 == 0:
+                            if test_ and count % 10 == 0:
                                 # temp_dict.pop("sql")
                                 # temp_dict.pop("query")
                                 # temp_dict['query'] = ""
                                 # temp_dict['sql'] = ""
                                 result2.append(temp_dict)
                                 test_2.append(question_ + '#' + query + '\n')
-                                temp_dict = {}
-                                count += 1
-                            elif test_ and count % 10 % 4 == 0:
-                                # temp_dict.pop("sql")
-                                # temp_dict.pop("query")
-                                # temp_dict['query'] = ""
-                                # temp_dict['sql'] = ""
                                 result3.append(temp_dict)
-
                                 temp_dict = {}
                                 count += 1
                             else:
@@ -441,26 +401,18 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                             query = "".join(sql_.split('kg.'))
                             # temp_dict["query"] = sql_
                             # 改成无db名字的格式
-                            temp_dict["query"] = query
+                            temp_dict["query"] = query.strip('\n')
                             temp_dict["question"] = question_
                             temp_dict['question_id'] = 'qid' + str(count)
                             temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
-                            if test_ and count % 5 == 0:
+                            if test_ and count % 10 == 0:
                                 # temp_dict.pop("sql")
                                 # temp_dict.pop("query")
                                 # temp_dict['query'] = ""
                                 # temp_dict['sql'] = ""
                                 result2.append(temp_dict)
-                                test_2.append(question_ + '#' + query + '\n')
-                                temp_dict = {}
-                                count += 1
-                            elif test_ and count % 10 % 4 == 0:
-                                # temp_dict.pop("sql")
-                                # temp_dict.pop("query")
-                                # temp_dict['query'] = ""
-                                # temp_dict['sql'] = ""
                                 result3.append(temp_dict)
-
+                                test_2.append(question_ + '#' + query + '\n')
                                 temp_dict = {}
                                 count += 1
                             else:
@@ -507,26 +459,18 @@ def data_structer_generater_ab(list_of_info, result, schema_, result2, result3, 
                     query = "".join(sql_.split('kg.'))
                     # temp_dict["query"] = sql_
                     # 改成无db名字的格式
-                    temp_dict["query"] = query
+                    temp_dict["query"] = query.strip('\n')
                     temp_dict["question"] = question_
                     temp_dict['question_id'] = 'qid' + str(count)
                     temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
-                    if test_ and count % 5 == 0:
+                    if test_ and count % 10 == 0:
                         # temp_dict.pop("sql")
                         # temp_dict.pop("query")
                         # temp_dict['query'] = ""
                         # temp_dict['sql'] = ""
                         result2.append(temp_dict)
-                        test_2.append(question_ + '#' + query + '\n')
-                        temp_dict = {}
-                        count += 1
-                    elif test_ and count % 10 % 4 == 0:
-                        # temp_dict.pop("sql")
-                        # temp_dict.pop("query")
-                        # temp_dict['query'] = ""
-                        # temp_dict['sql'] = ""
                         result3.append(temp_dict)
-
+                        test_2.append(question_ + '#' + query + '\n')
                         temp_dict = {}
                         count += 1
                     else:
@@ -607,7 +551,7 @@ def data_structer_generater_ba(list_of_info, result, schema_, result2, result3, 
                 temp_dict["question"] = question
                 temp_dict['question_id'] = 'qid' + str(count)
                 query = "".join(org_sql.split('kg.'))
-                temp_dict["query"] = query
+                temp_dict["query"] = query.strip('\n')
                 temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
                 # print(temp_sql)
                 if test_ and count % 10 == 0:
@@ -812,7 +756,7 @@ def data_structer_generater_bba(list_of_info, result, schema_, result2, result3,
                     temp_dict["question"] = question
                     temp_dict['question_id'] = 'qid' + str(count)
                     query = "".join(org_sql.split('kg.'))
-                    temp_dict["query"] = query
+                    temp_dict["query"] = query.strip('\n')
                     temp_dict['sql'] = m_d.get_sql(schema_, query, 'kg')
                     # print(temp_sql)
 
@@ -901,7 +845,7 @@ def generate_data_db(excel_xlsx, output_path, test_path, dev_path, train1_path, 
         for item in train1:
             if '\n\n\n' in item:
                 item = "\n\n".strip(item)
-            elif '\n\n' in item:
+            if '\n\n' in item:
                 item = "\n".strip(item)
             f4.write(item)
 
@@ -909,7 +853,7 @@ def generate_data_db(excel_xlsx, output_path, test_path, dev_path, train1_path, 
         for item in test2:
             if '\n\n\n' in item:
                 item = "\n\n".strip(item)
-            elif '\n\n' in item:
+            if '\n\n' in item:
                 item = "\n".strip(item)
             f5.write(item)
         # print(result)
@@ -929,12 +873,17 @@ def isfloat(num):
     except ValueError:
         return False
 
+
 def isnum(num):
     try:
         int(num)
         return True
     except ValueError:
         return False
+
+
+# def query_to_json(query):
+#
 
 if __name__ == "__main__":
     conn = pymysql.connect(host='192.168.209.110', port=3307, user='messi', password='messi', charset='utf8',
@@ -950,6 +899,7 @@ if __name__ == "__main__":
     generate_data_db('C:/Users/yifan.zhao01/Desktop/模板.xlsx', 'E:/project/data/DuSQL/train.json',
                      'E:/project/data/DuSQL/test.json', 'E:/project/data/DuSQL/dev.json',
                      'E:/project/data/DuSQL/train.sql', 'E:/project/data/DuSQL/test.sql', schema, )
+    fetch_name.main()
     #
     # cursor.close()
     # conn.close()
